@@ -1,0 +1,240 @@
+{% extends "base_tw.html" %}
+{% block title %}Inicio · Panel{% endblock %}
+
+{% block head_extra %}
+  <!-- Fuente Inter (como en el ejemplo) -->
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root{font-family:'Inter',sans-serif}
+    @supports (font-variation-settings: normal){ :root{font-family:'Inter var',sans-serif} }
+  </style>
+{% endblock %}
+
+{% block content %}
+<!-- Full-bleed para ocupar todo el ancho, por encima del max-w del layout -->
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <!-- Contenedor oscuro como tu referencia -->
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:grid-cols-12 xl:gap-14 max-w-7xl px-2">
+
+      <!-- =================== SIDEBAR =================== -->
+      <aside class="col-span-12 md:col-span-4 lg:col-span-3 bg-white/10 rounded-lg p-4">
+        <h1 class="font-bold text-lg lg:text-3xl bg-gradient-to-br from-white via-white/50 to-transparent bg-clip-text text-transparent">
+          Dashboard<span class="text-indigo-400">.</span>
+        </h1>
+        <p class="text-slate-400 text-sm mb-3">¡Bienvenido!</p>
+
+        <!-- Tarjeta usuario -->
+        <a href="{{ url_for('main.home') }}"
+           class="flex items-center gap-3 hover:bg-white/10 transition rounded-lg w-full p-3">
+          <div class="h-10 w-10 rounded-full bg-white/20 grid place-items-center text-white font-semibold">
+            {{ (current_user.nombre|default('U'))[:1]|upper }}
+          </div>
+          <div>
+            <p class="font-medium leading-4">{{ current_user.nombre|default('Usuario') }}</p>
+            <span class="text-xs text-slate-400">{{ current_user.email|default('invitado') }}</span>
+          </div>
+        </a>
+
+        <hr class="my-3 border-slate-700">
+
+        <!-- Menú lateral (enlazado a tus rutas) -->
+        <nav class="flex flex-col space-y-2 my-4">
+          <a href="{{ url_for('main.home') }}" class="hover:bg-white/10 rounded-lg py-3 px-2 group">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.125 1.125 0 011.591 0L21.75 12M4.5 9.75V21h15V9.75"/>
+              </svg>
+              <div>
+                <p class="font-bold text-slate-200 group-hover:text-indigo-400">Dashboard</p>
+                <p class="text-slate-400 text-sm hidden md:block">Resumen</p>
+              </div>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.inventario') }}" class="hover:bg-white/10 rounded-lg py-3 px-2 group">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
+              </svg>
+              <div>
+                <p class="font-bold text-slate-200 group-hover:text-indigo-400">Inventario</p>
+                <p class="text-slate-400 text-sm hidden md:block">Productos y stock</p>
+              </div>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.fin_panel') }}" class="hover:bg-white/10 rounded-lg py-3 px-2 group">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l3-3 2 2 4-4"/>
+              </svg>
+              <div>
+                <p class="font-bold text-slate-200 group-hover:text-indigo-400">Finanzas</p>
+                <p class="text-slate-400 text-sm hidden md:block">KPIs y gráficos</p>
+              </div>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.reportes_reposiciones') }}" class="hover:bg-white/10 rounded-lg py-3 px-2 group">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 13l3 3 7-7"/>
+              </svg>
+              <div>
+                <p class="font-bold text-slate-200 group-hover:text-indigo-400">Reporte de reposiciones</p>
+                <p class="text-slate-400 text-sm hidden md:block">Entradas de stock</p>
+              </div>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.admin') }}" class="hover:bg-white/10 rounded-lg py-3 px-2 group">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15"/>
+              </svg>
+              <div>
+                <p class="font-bold text-slate-200 group-hover:text-indigo-400">Admin</p>
+                <p class="text-slate-400 text-sm hidden md:block">Tablas del sistema</p>
+              </div>
+            </div>
+          </a>
+        </nav>
+
+        <p class="text-sm text-center text-gray-600">v1.0 · &copy; Inventario</p>
+      </aside>
+
+      <!-- =================== CONTENT =================== -->
+      <section class="col-span-12 md:col-span-8 lg:col-span-9 bg-white/10 rounded-lg p-6">
+        <!-- Encabezado -->
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="font-bold text-2xl sm:text-3xl">Resumen del período</h2>
+            <p class="text-sm text-slate-400 mt-1">{{ rango_label }}: {{ desde }} → {{ hasta }}</p>
+          </div>
+          <div class="mt-3 sm:mt-0 flex gap-2">
+            <a href="{{ url_for('main.fin_ventas') }}" class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm">➕ Registrar venta</a>
+            <a href="{{ url_for('main.fin_gastos') }}" class="px-3 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm">🧾 Registrar gasto</a>
+            <a href="{{ url_for('main.reportes_reposiciones') }}" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm">📥 Reposición</a>
+          </div>
+        </div>
+
+        <!-- KPIs (estilo tarjetas oscuras) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          <div class="bg-black/60 rounded-lg p-6">
+            <div class="flex items-center gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-teal-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182A3 3 0 0012 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182"/>
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <div>
+                <p class="text-teal-300 text-sm uppercase leading-4">Ingresos</p>
+                <p class="text-white font-bold text-2xl">Bs {{ total_ventas|default(0) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-black/60 rounded-lg p-6">
+            <div class="flex items-center gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-rose-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625A3.375 3.375 0 0016.125 8.25H6"/>
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <div>
+                <p class="text-rose-300 text-sm uppercase leading-4">Egresos</p>
+                <p class="text-white font-bold text-2xl">Bs {{ total_gastos|default(0) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-black/60 rounded-lg p-6">
+            <div class="flex items-center gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 {% if (ganancia_neta|default(0))>=0 %}text-emerald-300{% else %}text-rose-300{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l3-3 2 2 4-4"/>
+              </svg>
+              <div>
+                <p class="text-slate-300 text-sm uppercase leading-4">Ganancia neta</p>
+                <p class="text-white font-bold text-2xl">
+                  Bs {{ ganancia_neta|default(0) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjetas de “accesos/actividad” -->
+        <h3 class="font-bold py-4 uppercase mt-2">Accesos rápidos</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <a href="{{ url_for('main.fin_ventas') }}" class="bg-black/60 rounded-lg hover:bg-black/70 transition">
+            <div class="flex items-center">
+              <div class="text-3xl p-4">💸</div>
+              <div class="p-2">
+                <p class="text-xl font-bold">Ventas</p>
+                <p class="text-gray-500 text-sm">Registros: {{ ventas|length }}</p>
+              </div>
+            </div>
+            <div class="border-t border-white/5 p-4">
+              <span class="inline-flex items-center gap-2">Ver detalle</span>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.fin_gastos') }}" class="bg-black/60 rounded-lg hover:bg-black/70 transition">
+            <div class="flex items-center">
+              <div class="text-3xl p-4">🧾</div>
+              <div class="p-2">
+                <p class="text-xl font-bold">Gastos</p>
+                <p class="text-gray-500 text-sm">Registros: {{ gastos|length }}</p>
+              </div>
+            </div>
+            <div class="border-t border-white/5 p-4">
+              <span class="inline-flex items-center gap-2">Ver detalle</span>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.reportes_reposiciones') }}" class="bg-black/60 rounded-lg hover:bg-black/70 transition">
+            <div class="flex items-center">
+              <div class="text-3xl p-4">📥</div>
+              <div class="p-2">
+                <p class="text-xl font-bold">Reposición</p>
+                <p class="text-gray-500 text-sm">Agregar stock</p>
+              </div>
+            </div>
+            <div class="border-t border-white/5 p-4">
+              <span class="inline-flex items-center gap-2">Ir a formulario</span>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.inventario') }}" class="bg-black/60 rounded-lg hover:bg-black/70 transition">
+            <div class="flex items-center">
+              <div class="text-3xl p-4">📦</div>
+              <div class="p-2">
+                <p class="text-xl font-bold">Inventario</p>
+                <p class="text-gray-500 text-sm">Ver productos</p>
+              </div>
+            </div>
+            <div class="border-t border-white/5 p-4">
+              <span class="inline-flex items-center gap-2">Ir al listado</span>
+            </div>
+          </a>
+
+          <a href="{{ url_for('main.reportes_reposiciones') }}" class="bg-black/60 rounded-lg hover:bg-black/70 transition">
+            <div class="flex items-center">
+              <div class="text-3xl p-4">📈</div>
+              <div class="p-2">
+                <p class="text-xl font-bold">Reporte de reposiciones</p>
+                <p class="text-gray-500 text-sm">Filtra entradas por rango, producto u origen</p>
+              </div>
+            </div>
+            <div class="border-t border-white/5 p-4">
+              <span class="inline-flex items-center gap-2">Ver reporte</span>
+            </div>
+          </a>
+        </div>
+      </section>
+      <!-- =================== /CONTENT =================== -->
+
+    </div>
+  </div>
+</div>
+{% endblock %}

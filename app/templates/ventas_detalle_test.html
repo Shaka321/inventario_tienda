@@ -1,0 +1,109 @@
+{% extends "base_tw.html" %}
+{% block title %}Ventas · Detalle (Test 1 ítem){% endblock %}
+
+{% block content %}
+  <nav class="text-sm text-gray-600 mb-4">
+    <a href="{{ url_for('main.home') }}" class="hover:underline">Inicio</a> /
+    <span class="text-gray-800 font-semibold">Venta detalle (test)</span>
+  </nav>
+
+  <h1 class="text-2xl md:text-3xl font-bold mb-4">🧾 Venta con detalle (1 ítem – test)</h1>
+
+  <form action="{{ url_for('venta_detalle_nueva') }}" method="POST"
+        class="grid md:grid-cols-3 gap-4 rounded-xl border p-4 bg-white">
+
+    <!-- Producto -->
+    <div class="md:col-span-2">
+      <label class="block text-sm font-semibold mb-1">Producto</label>
+      <select id="producto" name="producto" required class="w-full rounded-lg border-gray-300">
+        <option value="">-- Selecciona --</option>
+        {% for p in productos %}
+          {# p = (nombre, precio_unit, precio_pack, unidades_pack) #}
+          <option
+            value="{{ p[0] }}"
+            data-precio-unit="{{ p[1] or '' }}"
+            data-precio-pack="{{ p[2] or '' }}"
+            data-unidades-pack="{{ p[3] or '' }}">
+            {{ p[0] }}
+          </option>
+        {% endfor %}
+      </select>
+      <p class="text-xs text-gray-500 mt-1" id="info_pack"></p>
+    </div>
+
+    <!-- Modo -->
+    <div class="md:col-span-3">
+      <div class="flex items-center gap-6">
+        <label class="inline-flex items-center">
+          <input type="radio" name="modo" value="unidad" class="w-4 h-4 text-primary border-gray-300" checked>
+          <span class="ms-2">Por unidad</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="radio" name="modo" value="paquete" class="w-4 h-4 text-primary border-gray-300">
+          <span class="ms-2">Por paquete</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Cantidad -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Cantidad</label>
+      <input type="number" name="cantidad" id="cantidad" min="1" required
+             class="w-full rounded-lg border-gray-300">
+    </div>
+
+    <!-- Precio a aplicar -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Precio a aplicar</label>
+      <input type="number" step="0.01" name="precio_unit" id="precio_unit" required
+             class="w-full rounded-lg border-gray-300 bg-white">
+      <p class="text-xs text-gray-500 mt-1" id="ayuda_precio"></p>
+    </div>
+
+    <!-- Botones -->
+    <div class="md:col-span-3">
+      <button class="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:opacity-90">
+        Guardar venta (test)
+      </button>
+      <a href="{{ url_for('main.fin_panel') }}" class="px-4 py-2 rounded-lg border hover:bg-gray-50 font-semibold">
+        Cancelar
+      </a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const sel = document.getElementById('producto');
+  const radios = document.querySelectorAll('input[name="modo"]');
+  const precio = document.getElementById('precio_unit');
+  const infoPack = document.getElementById('info_pack');
+  const ayuda = document.getElementById('ayuda_precio');
+
+  function updateUI(){
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt) { precio.value = ''; ayuda.textContent=''; infoPack.textContent=''; return; }
+
+    const pu = parseFloat(opt.getAttribute('data-precio-unit')) || 0;
+    const pp = parseFloat(opt.getAttribute('data-precio-pack')) || 0;
+    const up = parseInt(opt.getAttribute('data-unidades-pack')) || 0;
+    const modo = document.querySelector('input[name="modo"]:checked')?.value || 'unidad';
+
+    if (modo === 'unidad') {
+      precio.value = pu ? pu.toFixed(2) : '';
+      ayuda.textContent = pu ? 'Precio por unidad sugerido' : 'No hay precio por unidad configurado';
+      infoPack.textContent = up ? `(1 paquete = ${up} unid. | Precio pack: ${pp || '-'} )` : '';
+    } else {
+      precio.value = pp ? pp.toFixed(2) : '';
+      ayuda.textContent = pp ? 'Precio por paquete sugerido' : 'Este producto no tiene precio de paquete';
+      infoPack.textContent = up ? `(1 paquete = ${up} unid.)` : '(sin unidades por paquete configuradas)';
+    }
+  }
+
+  sel?.addEventListener('change', updateUI);
+  radios.forEach(r => r.addEventListener('change', updateUI));
+  updateUI();
+});
+</script>
+{% endblock %}

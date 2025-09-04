@@ -1,0 +1,170 @@
+{% extends "base_tw.html" %}
+{% block title %}Finanzas · Registrar Venta{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
+
+      <!-- CONTENT (100% ancho sin sidebar) -->
+      <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+      <!-- Main -->
+      <main class="bg-white/10 col-span-12 md:col-span-9 rounded-lg p-6 ring-1 ring-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+            ➕ Registrar una Venta
+          </h1>
+          <a href="{{ url_for('main.fin_ventas') }}"
+             class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold ring-1 ring-white/10">
+            📄 Ver ventas
+          </a>
+        </div>
+
+        <!-- Card del formulario -->
+        <form action="/registrar_venta" method="POST"
+              class="grid md:grid-cols-2 gap-4 rounded-xl p-4 bg-white/5 ring-1 ring-white/10">
+
+          <!-- Producto -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Producto</label>
+            <select id="producto" name="producto" required
+                    class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">-- Selecciona un producto --</option>
+              {% for p in productos %}
+              <option value="{{ p[0] }}"
+                      data-precio-unit="{{ p[1] or '' }}"
+                      data-stock="{{ p[2] or 0 }}"
+                      data-precio-pack="{{ p[3] or '' }}"
+                      data-unidades-pack="{{ p[4] or '' }}">
+                {{ p[0] }}
+              </option>
+              {% endfor %}
+            </select>
+            <p class="text-sm text-slate-400 mt-1">
+              <b>Stock actual:</b> <span id="stock_actual">-</span>
+            </p>
+          </div>
+
+          <!-- Modos -->
+          <div class="md:col-span-2 flex items-center gap-6">
+            <label class="inline-flex items-center">
+              <input type="radio" name="modo" value="unidad" checked
+                     class="w-4 h-4 text-indigo-500 bg-black/30 border-white/10">
+              <span class="ms-2">Por unidad</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="modo" value="paquete"
+                     class="w-4 h-4 text-indigo-500 bg-black/30 border-white/10">
+              <span class="ms-2">Por paquete</span>
+            </label>
+            <span id="info_pack" class="text-sm text-slate-400"></span>
+          </div>
+
+          <!-- Cantidad -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Cantidad</label>
+            <input type="number" name="cantidad" id="cantidad" min="1" required
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <!-- Precio (auto) -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Precio (auto)</label>
+            <input type="number" step="0.01" name="precio_unit" id="precio_unit" readonly
+                   class="w-full rounded-lg bg-black/20 text-slate-300 border border-white/10 px-3 py-2">
+          </div>
+
+          <!-- Total -->
+          <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-slate-200">Total</label>
+              <input type="text" id="total_mostrado" readonly
+                     class="w-full rounded-lg bg-black/20 text-slate-300 border border-white/10 px-3 py-2">
+              <input type="hidden" name="total" id="total_hidden">
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="md:col-span-2 flex items-center gap-3 pt-2">
+            <button class="px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg font-semibold">
+              Registrar Venta
+            </button>
+            <a href="{{ url_for('main.fin_panel') }}"
+               class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold ring-1 ring-white/10">
+               Cancelar
+            </a>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sel = document.getElementById('producto');
+  const radios = document.querySelectorAll('input[name="modo"]');
+  const cantidad = document.getElementById('cantidad');
+  const precioUnit = document.getElementById('precio_unit');
+  const totalShown = document.getElementById('total_mostrado');
+  const totalHidden = document.getElementById('total_hidden');
+  const stockSpan = document.getElementById('stock_actual');
+  const infoPack = document.getElementById('info_pack');
+
+  function getSelectedData(){
+    if (!sel || sel.selectedIndex < 0) return {};
+    const opt = sel.options[sel.selectedIndex];
+    return {
+      precioUnit: parseFloat(opt.getAttribute('data-precio-unit')) || 0,
+      stock: parseInt(opt.getAttribute('data-stock')) || 0,
+      precioPack: parseFloat(opt.getAttribute('data-precio-pack')) || 0,
+      unidadesPack: parseInt(opt.getAttribute('data-unidades-pack')) || 0
+    };
+  }
+
+  function updateUI(){
+    const data = getSelectedData();
+    const modo = document.querySelector('input[name="modo"]:checked')?.value || 'unidad';
+
+    // Stock
+    stockSpan.textContent = Number.isFinite(data.stock) ? data.stock : '-';
+
+    // Precio según modo
+    if (modo === 'unidad') {
+      precioUnit.value = data.precioUnit ? data.precioUnit.toFixed(2) : '';
+      infoPack.textContent = '';
+    } else {
+      precioUnit.value = data.precioPack ? data.precioPack.toFixed(2) : '';
+      infoPack.textContent = data.unidadesPack
+        ? `(1 paquete = ${data.unidadesPack} unid.)`
+        : '(sin configuración de paquete)';
+    }
+
+    // Total
+    const cant = parseFloat(cantidad.value) || 0;
+    const p = parseFloat(precioUnit.value) || 0;
+    const tot = cant * p;
+    totalShown.value = tot ? tot.toFixed(2) : '';
+    totalHidden.value = tot ? tot.toFixed(2) : '';
+  }
+
+  sel?.addEventListener('change', updateUI);
+  radios.forEach(r => r.addEventListener('change', updateUI));
+  cantidad?.addEventListener('input', updateUI);
+  updateUI();
+});
+</script>
+{% endblock %}

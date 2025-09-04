@@ -1,0 +1,120 @@
+{% extends "base_tw.html" %}
+{% block title %}Editar Producto{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
+
+      <!-- CONTENT (100% ancho sin sidebar) -->
+      <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+
+      <!-- Main -->
+      <main class="bg-white/10 col-span-12 md:col-span-9 rounded-lg p-6 ring-1 ring-white/10">
+
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-slate-400 mb-4">
+          <a href="{{ url_for('main.home') }}" class="hover:underline">Inicio</a> /
+          <a href="{{ url_for('main.inventario') }}" class="hover:underline">Inventario</a> /
+          <span class="text-slate-200 font-semibold">Editar producto</span>
+        </nav>
+
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+            ✏️ Editar Producto
+          </h1>
+          <span class="text-sm text-slate-400">ID: <b class="text-slate-200">{{ p[0] }}</b></span>
+        </div>
+
+        <form action="/producto/{{ p[0] }}/editar" method="POST"
+              class="grid md:grid-cols-2 gap-4 rounded-xl p-4 bg-white/5 ring-1 ring-white/10">
+
+          <!-- Nombre -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="nombre">Nombre</label>
+            <input id="nombre" name="nombre" type="text" required
+                   value="{{ p[1] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Ej. Detergente Ariel">
+          </div>
+
+          <!-- Categoría -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="categoria">Categoría</label>
+            <input id="categoria" name="categoria" type="text"
+                   value="{{ p[2] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Limpieza, Aseo, etc.">
+          </div>
+
+          <!-- Precio unitario -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="precio">Precio unitario</label>
+            <input id="precio" name="precio" type="number" step="0.01" min="0" required
+                   value="{{ p[3] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="0.00">
+          </div>
+
+          <!-- Cantidad -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="cantidad">Cantidad en stock</label>
+            <input id="cantidad" name="cantidad" type="number" min="0" required
+                   value="{{ p[4] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="0">
+          </div>
+
+          <!-- Proveedor -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="proveedor">Proveedor</label>
+            <input id="proveedor" name="proveedor" type="text"
+                   value="{{ p[5] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Nombre del proveedor">
+          </div>
+
+          <!-- Código de barras -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-1 text-slate-200" for="codigo">Código de barras</label>
+            <input id="codigo" name="codigo" type="text"
+                   value="{{ p[6] }}"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Debe ser único. Ej: PROD0001">
+            <p class="text-xs text-slate-400 mt-1">
+              Si cambias este valor, asegúrate de que no exista en otro producto.
+            </p>
+          </div>
+
+          <!-- Botones -->
+          <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
+            <button type="submit"
+                    class="px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg font-semibold">
+              💾 Guardar cambios
+            </button>
+            <a href="{{ url_for('main.inventario') }}"
+               class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold ring-1 ring-white/10">
+              ← Cancelar y volver
+            </a>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}
