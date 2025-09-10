@@ -1,12 +1,23 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
-*.pyd
+.venv/
 venv/
-build/
-dist/
-*.spec
-data/
-*.db
 .env
+
+# SQLite / datos locales
+*.db
+instance/
+
+# Backups locales (NO subir al repo)
+backups/
+
+# OS/editor
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Node (por si algún tooling)
+node_modules/
