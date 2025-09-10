@@ -1,21 +1,24 @@
-#!/usr/bin/env python3
-import sqlite3
+import os, sqlite3
+os.makedirs("instance", exist_ok=True)
+db_path = os.path.join("instance", "app.db")
+con = sqlite3.connect(db_path)
+c = con.cursor()
 
-DB = "data/app.db"
+def has_col(table, col):
+    cur = c.execute(f"PRAGMA table_info({table})")
+    return any(r[1] == col for r in cur.fetchall())
 
-def col_exists(cn, table, column):
-    return any(r[1] == column for r in cn.execute(f"PRAGMA table_info({table})"))
+# columnas nuevas en productos
+for col, ddl in [
+    ("tamanio_valor", "ALTER TABLE productos ADD COLUMN tamanio_valor REAL"),
+    ("tamanio_uom",   "ALTER TABLE productos ADD COLUMN tamanio_uom TEXT"),
+    ("variante",      "ALTER TABLE productos ADD COLUMN variante TEXT"),
+]:
+    try:
+        if not has_col("productos", col):
+            c.execute(ddl)
+    except sqlite3.OperationalError:
+        pass
 
-with sqlite3.connect(DB) as cn:
-    cn.execute("PRAGMA foreign_keys=ON;")
-
-    # Agregar columnas si no existen
-    if not col_exists(cn, "productos", "tamanio_valor"):
-        cn.execute("ALTER TABLE productos ADD COLUMN tamanio_valor REAL;")
-    if not col_exists(cn, "productos", "tamanio_uom"):
-        cn.execute("ALTER TABLE productos ADD COLUMN tamanio_uom TEXT;")
-    if not col_exists(cn, "productos", "variante"):
-        cn.execute("ALTER TABLE productos ADD COLUMN variante TEXT;")
-
-    cn.commit()
-print("OK: columnas tamanio_valor, tamanio_uom y variante listas.")
+con.commit(); con.close()
+print("Migración 040 size/variant: columnas añadidas si faltaban.")

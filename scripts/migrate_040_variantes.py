@@ -1,22 +1,23 @@
-#!/usr/bin/env python3
-import sqlite3, os
+import os, sqlite3
+os.makedirs("instance", exist_ok=True)
+db_path = os.path.join("instance", "app.db")
+con = sqlite3.connect(db_path)
+c = con.cursor()
 
-DB = "data/app.db"
+def has_col(table, col):
+    cur = c.execute(f"PRAGMA table_info({table})")
+    return any(r[1] == col for r in cur.fetchall())
 
-def col_exists(cn, table, col):
-    return any(r[1] == col for r in cn.execute(f"PRAGMA table_info({table})").fetchall())
+# columnas usadas por reposiciones vinculadas a gasto
+for col, ddl in [
+    ("total_compra", "ALTER TABLE reposiciones ADD COLUMN total_compra REAL"),
+    ("gasto_rowid",  "ALTER TABLE reposiciones ADD COLUMN gasto_rowid INTEGER"),
+]:
+    try:
+        if not has_col("reposiciones", col):
+            c.execute(ddl)
+    except sqlite3.OperationalError:
+        pass
 
-with sqlite3.connect(DB) as cn:
-    cn.execute("PRAGMA foreign_keys=ON;")
-    # tamaño (ml)
-    if not col_exists(cn, "productos", "tamano_ml"):
-        cn.execute("ALTER TABLE productos ADD COLUMN tamano_ml REAL;")
-    # variante (sabor/color)
-    if not col_exists(cn, "productos", "variante"):
-        cn.execute("ALTER TABLE productos ADD COLUMN variante TEXT;")
-    # índices útiles (opcionales)
-    cn.executescript("""
-    CREATE INDEX IF NOT EXISTS idx_productos_variante ON productos(variante);
-    CREATE INDEX IF NOT EXISTS idx_productos_tamano   ON productos(tamano_ml);
-    """)
-print("OK: migrate_040_variantes aplicada.")
+con.commit(); con.close()
+print("Migración 040 variantes: columnas en reposiciones añadidas si faltaban.")
