@@ -15,11 +15,9 @@
 <div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
   <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
     <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
-      <!-- CONTENT (100% ancho sin sidebar) -->
+      <!-- CONTENT -->
       <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
 
-      <!-- Contenido -->
-      <main class="bg-white/10 col-span-12 md:col-span-9 rounded-lg p-6 ring-1 ring-white/10">
         <div class="flex items-center justify-between mb-4">
           <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
             💸 Gastos Registrados
@@ -41,6 +39,7 @@
               <option value="semana" {% if r=='semana' %}selected{% endif %}>Últimos 7 días</option>
               <option value="mes" {% if r=='mes' %}selected{% endif %}>Mes actual</option>
               <option value="personalizado" {% if r=='personalizado' %}selected{% endif %}>Personalizado</option>
+              <option value="todo" {% if r=='todo' %}selected{% endif %}>Todo</option>
             </select>
           </div>
 
@@ -74,19 +73,30 @@
                 <th class="p-3 font-semibold">Fecha</th>
                 <th class="p-3 font-semibold">Motivo</th>
                 <th class="p-3 font-semibold text-right">Monto</th>
+                <th class="p-3 font-semibold text-center">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5">
               {% for g in gastos %}
               <tr class="hover:bg-white/5 transition-colors">
-                <td class="p-3 text-slate-300 whitespace-nowrap">{{ g[0] }}</td>
-                <td class="p-3 text-slate-200">{{ g[1] }}</td>
-                <td class="p-3 text-slate-100 text-right font-semibold">{{ g[2] }}</td>
+                <td class="p-3 text-slate-300 whitespace-nowrap">{{ g['fecha'] }}</td>
+                <td class="p-3 text-slate-200">{{ g['motivo'] }}</td>
+                <td class="p-3 text-slate-100 text-right font-semibold">{{ '%.2f'|format(g['monto']) }}</td>
+                <td class="p-3 text-center flex gap-2 justify-center">
+                  <a href="{{ url_for('main.conciliacion_gasto', rid=g['rowid']) }}"
+                     class="px-3 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 text-white">
+                     🔗 Conciliación
+                  </a>
+                  <a href="{{ url_for('main.export_reposiciones_gasto', rid=g['rowid']) }}"
+                     class="px-3 py-1 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white">
+                     ⬇ CSV
+                  </a>
+                </td>
               </tr>
               {% endfor %}
               {% if gastos|length == 0 %}
               <tr>
-                <td colspan="3" class="p-4 text-center text-slate-400">Sin registros para el rango seleccionado.</td>
+                <td colspan="4" class="p-4 text-center text-slate-400">Sin registros para el rango seleccionado.</td>
               </tr>
               {% endif %}
             </tbody>
@@ -100,7 +110,6 @@
 
 {% block scripts %}
 <script>
-  // Muestra/oculta fechas al cambiar el rango (mejor UX sin espera)
   (function(){
     const sel = document.getElementById('rango');
     sel?.addEventListener('change', function(){

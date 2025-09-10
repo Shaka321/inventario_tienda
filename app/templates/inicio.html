@@ -114,10 +114,21 @@
             <p class="text-sm text-slate-400 mt-1">{{ rango_label }}: {{ desde }} → {{ hasta }}</p>
           </div>
           <div class="mt-3 sm:mt-0 flex gap-2">
-            <a href="{{ url_for('main.fin_ventas') }}" class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm">➕ Registrar venta</a>
-            <a href="{{ url_for('main.fin_gastos') }}" class="px-3 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm">🧾 Registrar gasto</a>
-            <a href="{{ url_for('main.reportes_reposiciones') }}" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm">📥 Reposición</a>
-          </div>
+            <a href="{{ url_for('main.fin_venta_form') }}"
+               class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm">
+              ➕ Registrar venta
+            </a>
+          
+            <a href="{{ url_for('main.fin_gasto_form') }}"
+               class="px-3 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm">
+              🧾 Registrar gasto
+            </a>
+          
+            <a href="{{ url_for('main.fin_reposicion_form') }}"
+               class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
+              📥 Reposición
+            </a>
+          </div>          
         </div>
 
         <!-- KPIs (estilo tarjetas oscuras) -->

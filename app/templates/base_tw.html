@@ -96,4 +96,19 @@
 
   {% block scripts %}{% endblock %}
 </body>
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}
+    <div class="mx-auto max-w-5xl my-3 px-3">
+      {% for cat, msg in msgs %}
+        <div class="mb-2 rounded-lg px-4 py-2 text-sm
+                    {% if cat=='error' %} bg-rose-900/30 text-rose-200 ring-1 ring-rose-800/60
+                    {% elif cat=='success' %} bg-emerald-900/30 text-emerald-200 ring-1 ring-emerald-800/60
+                    {% else %} bg-white/10 text-slate-100 ring-1 ring-white/10 {% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 </html>

@@ -6,42 +6,63 @@
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 <style>
   :root { font-family: 'Inter', sans-serif; }
-  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+  @supports (font-variation-settings: normal) {
+    :root { font-family: 'Inter var', sans-serif; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- FULL-BLEED para ocupar 100% del ancho visual -->
 <div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
   <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
-    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
+    <div class="grid grid-cols-12 w-full gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 px-2">
 
-      <!-- CONTENT (100% ancho sin sidebar) -->
       <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
-
-        <!-- Encabezado -->
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
             📥 Reposición de Stock
           </h1>
-          <a href="{{ url_for('main.fin_panel') }}"
+          <a href="{{ url_for('main.reportes_reposiciones') }}"
              class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold inline-flex items-center gap-2 ring-1 ring-white/10">
-            ⬅️ <span>Volver a Finanzas</span>
+            📄 Ver reposiciones
           </a>
         </div>
 
-        <!-- Formulario -->
-        <form action="{{ url_for('reposicion') }}" method="POST"
+        {% if gasto %}
+        <div class="mb-5 rounded-lg bg-amber-900/20 ring-1 ring-amber-700/40 p-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="font-semibold text-amber-200">
+              Vinculando a gasto #{{ gasto['rid'] }} — {{ gasto['motivo'] }} ({{ gasto['fecha'] }})
+            </div>
+            <div class="ms-auto text-sm">
+              Meta: <b class="text-slate-100">{{ '%.2f'|format(gasto['monto']|float) }} Bs</b> ·
+              Asignado: <b id="asignadoCur" class="text-slate-100">{{ '%.2f'|format(asignado|float) }} Bs</b> ·
+              Restante: <b id="restanteCur" class="text-slate-100">{{ '%.2f'|format(restante if restante is not none else 0) }} Bs</b>
+            </div>
+          </div>
+          <div class="mt-3 h-2 w-full bg-black/30 rounded">
+            {% set meta = gasto['monto']|float %}
+            {% set prog = (asignado/meta*100) if meta>0 else 0 %}
+            <div id="barProg" class="h-2 bg-amber-400 rounded" data-width="{{ '%.1f'|format(prog if prog<=100 else 100) }}"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('main.registrar_reposicion') }}" method="POST"
               class="grid md:grid-cols-3 gap-4 rounded-lg ring-1 ring-white/10 p-4 bg-white/5">
+
+          {% if gasto %}
+            <input type="hidden" name="gasto_rid" value="{{ gasto['rid'] }}">
+          {% endif %}
 
           <!-- Producto -->
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold mb-1 text-slate-200">Producto</label>
-            <select name="producto_repos" required
+            <select name="producto" required
                     class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">-- Selecciona un producto --</option>
-              {% for p in productos %}
-                <option value="{{ p[0] }}">{{ p[0] }}</option>
+              {% for value, label in productos %}
+                <option value="{{ value }}">{{ label }}</option>
               {% endfor %}
             </select>
           </div>
@@ -49,18 +70,22 @@
           <!-- Cantidad -->
           <div>
             <label class="block text-sm font-semibold mb-1 text-slate-200">Cantidad a reponer (unidades)</label>
-            <input type="number" name="cantidad_repos" id="cantidad_repos" min="1" required
+            <input type="number" name="cantidad" id="cantidad_repos" min="1" required
                    class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
 
           <!-- Costo unitario -->
           <div>
-            <label class="block text-sm font-semibold mb-1 text-slate-200">Costo unitario (opcional)</label>
-            <input type="number" step="0.01" min="0" name="costo_unit" id="costo_unit" placeholder="Ej. 12.50"
-                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <p class="text-xs text-slate-400 mt-1">
-              Si lo indicas, el reporte mostrará el valor total de esta reposición.
-            </p>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Costo unitario <span class="text-slate-400">(opcional si indicas costo total)</span></label>
+            <input type="number" step="0.0001" min="0" name="costo_unit" id="costo_unit" placeholder="Ej. 1.2500"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2">
+          </div>
+
+          <!-- Costo total -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Costo total de la compra <span class="text-slate-400">(opcional · se compara con el gasto)</span></label>
+            <input type="number" step="0.01" min="0" name="costo_total" id="costo_total" placeholder="Ej. 60.00"
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2">
           </div>
 
           <!-- Proveedor (opcional) -->
@@ -70,11 +95,21 @@
                    class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
 
-          <!-- Valor total (solo display) -->
-          <div class="md:col-span-1">
-            <label class="block text-sm font-semibold mb-1 text-slate-200">Valor total (auto)</label>
+          <!-- Referencia / Origen (opcional) -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Referencia / Origen (opcional)</label>
+            <input type="text" name="ref" id="ref" placeholder="compra, ajuste, etc."
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <!-- Valor total (auto) -->
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Valor total (auto) <span class="text-slate-400">(cantidad × costo unitario)</span></label>
             <input type="text" id="valor_total_mostrado" readonly placeholder="—"
                    class="w-full rounded-lg bg-black/50 text-slate-300 border border-white/10 px-3 py-2">
+            {% if gasto %}
+              <p id="restantePrev" class="mt-2 text-xs"></p>
+            {% endif %}
           </div>
 
           <!-- Botones -->
@@ -88,7 +123,6 @@
             </a>
           </div>
         </form>
-
       </main>
     </div>
   </div>
@@ -98,19 +132,69 @@
 {% block scripts %}
 <script>
   (function(){
-    const cant = document.getElementById('cantidad_repos');
-    const costo = document.getElementById('costo_unit');
+    const bar = document.getElementById('barProg');
+    if (bar && bar.dataset.width) bar.style.width = bar.dataset.width + '%';
+
+    const cant  = document.getElementById('cantidad_repos');
+    const cu    = document.getElementById('costo_unit');
+    const ct    = document.getElementById('costo_total');
     const total = document.getElementById('valor_total_mostrado');
+    const form  = document.querySelector("form");
+
+    function num(v){ const x = parseFloat(v); return isNaN(x) ? 0 : x; }
 
     function calc(){
-      const q = parseFloat(cant.value) || 0;
-      const cu = parseFloat(costo.value) || 0;
-      const v = q * cu;
-      total.value = (q && cu) ? v.toFixed(2) : '';
+      const q   = num(cant?.value);
+      const cuv = num(cu?.value);
+      const ctv = num(ct?.value);
+
+      const autoTotal = q * cuv;
+      total.value = (autoTotal > 0) ? autoTotal.toFixed(2) : '';
+
+      const comparar = (ct && ctv > 0) ? ctv : autoTotal;
+
+      const restanteCur = document.getElementById('restanteCur');
+      const restantePrev = document.getElementById('restantePrev');
+      if (restanteCur && restantePrev) {
+        const restante = parseFloat(restanteCur.textContent || '0') || 0;
+        const post = (restante - comparar);
+        const abs = Math.abs(post);
+        let msg = '';
+        if (post > 0.01) {
+          msg = `Quedará pendiente: ${post.toFixed(2)} Bs`;
+          restantePrev.className = 'mt-2 text-xs text-amber-300';
+        } else if (abs <= 0.01) {
+          msg = '¡Cuadra exacto con el gasto!';
+          restantePrev.className = 'mt-2 text-xs text-emerald-300';
+        } else {
+          msg = `⚠ Te pasas por ${(-post).toFixed(2)} Bs`;
+          restantePrev.className = 'mt-2 text-xs text-rose-300';
+        }
+        restantePrev.textContent = msg;
+      }
     }
 
     cant?.addEventListener('input', calc);
-    costo?.addEventListener('input', calc);
+    cu?.addEventListener('input', calc);
+    ct?.addEventListener('input', calc);
+
+    // 🚨 Bloquear si excede gasto
+    form?.addEventListener("submit", (e) => {
+      const q   = num(cant?.value);
+      const cuv = num(cu?.value);
+      const ctv = num(ct?.value);
+      const autoTotal = q * cuv;
+      const comparar = (ct && ctv > 0) ? ctv : autoTotal;
+
+      const restanteCur = document.getElementById('restanteCur');
+      const restante = parseFloat(restanteCur?.textContent || '0') || 0;
+      const post = restante - comparar;
+
+      if (post < -0.01) {
+        e.preventDefault();
+        alert("❌ Esta reposición excede el monto disponible del gasto.");
+      }
+    });
   })();
 </script>
 {% endblock %}

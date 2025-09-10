@@ -2,7 +2,6 @@
 {% block title %}Finanzas · Panel{% endblock %}
 
 {% block head_extra %}
-  <!-- Inter (tipografía del ejemplo) -->
   <link rel="preconnect" href="https://rsms.me/">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
@@ -14,28 +13,31 @@
 {% endblock %}
 
 {% block content %}
-<!-- Full-bleed para escapar del max-w del layout y ocupar 100vw -->
+<!-- Full-bleed para ocupar 100vw -->
 <div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen antialiased bg-black text-slate-300 min-h-screen py-4">
-
   <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl my-10 px-2">
 
-      <!-- CONTENT (100% ancho sin sidebar) -->
+    <!-- CONTENT (100% ancho sin sidebar) -->
     <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
-
-    <!-- CONTENIDO -->
-    <section id="content" class="bg-white/10 col-span-12 md:col-span-9 rounded-lg p-6">
 
       <!-- Rango y Export -->
       <div class="mb-6 space-y-4">
-        <h2 class="font-bold text-xl">📊 Módulo de Finanzas y Reportes</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-xl">📊 Módulo de Finanzas y Reportes</h2>
+          <a href="{{ url_for('main.fin_venta_form') }}"
+             class="px-4 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold">
+            ➕ Registrar venta
+          </a>
+        </div>
 
         <form method="GET" action="{{ url_for('main.fin_panel') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
           <div class="md:col-span-3">
             <label class="text-sm text-slate-400">Rango</label>
             <select name="r" id="rango" class="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2">
-              <option value="hoy"           {% if r=='hoy' %}selected{% endif %}>Hoy</option>
-              <option value="semana"        {% if r=='semana' %}selected{% endif %}>Últimos 7 días</option>
-              <option value="mes"           {% if r=='mes' %}selected{% endif %}>Mes actual</option>
+              <option value="todo"         {% if r=='todo' %}selected{% endif %}>Todo</option>
+              <option value="hoy"          {% if r=='hoy' %}selected{% endif %}>Hoy</option>
+              <option value="semana"       {% if r=='semana' %}selected{% endif %}>Últimos 7 días</option>
+              <option value="mes"          {% if r=='mes' %}selected{% endif %}>Mes actual</option>
               <option value="personalizado" {% if r=='personalizado' %}selected{% endif %}>Personalizado</option>
             </select>
           </div>
@@ -64,12 +66,12 @@
         <div class="flex flex-wrap gap-2 items-center bg-black/40 border border-white/10 rounded-lg p-3">
           <div class="text-sm text-slate-400">Exportar CSV:</div>
           <a class="px-3 py-1.5 rounded-lg bg-emerald-700/70 hover:bg-emerald-600 font-semibold"
-             href="{{ url_for('main.export_ventas_filtrado') }}?r={{ r }}&desde={{ desde }}&hasta={{ hasta }}">⬇️ Ventas (filtrado)</a>
+             href="{{ url_for('main.export_ventas_filtrado') }}?desde={{ desde }}&hasta={{ hasta }}">⬇️ Ventas (filtrado)</a>
           <a class="px-3 py-1.5 rounded-lg bg-rose-700/70 hover:bg-rose-600 font-semibold"
-             href="{{ url_for('main.export_gastos_filtrado') }}?r={{ r }}&desde={{ desde }}&hasta={{ hasta }}">⬇️ Gastos (filtrado)</a>
+             href="{{ url_for('main.export_gastos_filtrado') }}?desde={{ desde }}&hasta={{ hasta }}">⬇️ Gastos (filtrado)</a>
           <span class="ms-auto text-sm text-slate-400">
-            <a class="hover:underline" href="/export/ventas.csv">Todo ventas</a> ·
-            <a class="hover:underline" href="/export/gastos.csv">Todo gastos</a>
+            <a class="hover:underline" href="{{ url_for('main.export_ventas_filtrado') }}">Todo ventas</a> ·
+            <a class="hover:underline" href="{{ url_for('main.export_gastos_filtrado') }}">Todo gastos</a>
           </span>
         </div>
       </div>
@@ -96,19 +98,31 @@
           <h3 class="font-bold mb-3">Ventas por día</h3>
           <canvas id="graficoVentas" height="200"></canvas>
         </div>
+
         <div class="bg-black/60 p-6 rounded-lg">
           <h3 class="font-bold mb-3">Ingresos vs Egresos</h3>
           <canvas id="graficoResumen" height="200"></canvas>
         </div>
-        <div class="bg-black/60 p-6 rounded-lg">
+
+        <!-- TOP productos: gráfico + leyenda enriquecida al lado -->
+        <div class="bg-black/60 p-6 rounded-lg lg:col-span-2">
           <h3 class="font-bold mb-3">Productos más vendidos (Top 5)</h3>
-          <div class="mx-auto max-w-xs h-56">
-            <canvas id="graficoTop"></canvas>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div class="h-56">
+              <canvas id="graficoTop" height="220"></canvas>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 mb-2">
+                * Las etiquetas incluyen <b>tamaño</b>/<b>variante</b> y <b>ID</b> cuando el producto existe en inventario;
+                si no hay match verás <code>[sin ID]</code>.
+              </p>
+              <div id="leyendaTop" class="space-y-2"></div>
+            </div>
           </div>
         </div>
       </div>
 
-    </section>
+    </main>
   </div>
 </div>
 {% endblock %}
@@ -116,7 +130,7 @@
 {% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Paquete de datos seguro para JS (evita lints y Undefined) -->
+  <!-- Paquete de datos seguro para JS -->
   <script id="fin-data" type="application/json">
   {{ {
       "ventas_labels": ventas_labels | default([], true),
@@ -144,11 +158,7 @@
     // ===== Cargar datos desde el <script type="application/json"> =====
     const finDataEl = document.getElementById('fin-data');
     let FIN = {};
-    try {
-      FIN = JSON.parse(finDataEl?.textContent || "{}");
-    } catch (e) {
-      FIN = {};
-    }
+    try { FIN = JSON.parse(finDataEl?.textContent || "{}"); } catch (e) { FIN = {}; }
 
     const ventasLabels  = Array.isArray(FIN.ventas_labels) ? FIN.ventas_labels : [];
     const ventasValues  = Array.isArray(FIN.ventas_values) ? FIN.ventas_values : [];
@@ -156,8 +166,7 @@
     const totalEgresos  = typeof FIN.total_gastos === "number" ? FIN.total_gastos : 0;
     const topLabels     = Array.isArray(FIN.top_labels) ? FIN.top_labels : [];
     const topValues     = Array.isArray(FIN.top_values) ? FIN.top_values : [];
-    
-    // Paleta simple para modo oscuro
+
     const gridColor = 'rgba(255,255,255,0.1)';
     const tickColor = 'rgba(255,255,255,0.7)';
 
@@ -187,70 +196,44 @@
       };
     }
 
-    // Inicializar gráficos
+    // Gráfico 1: Ventas por día
     new Chart(
       document.getElementById('graficoVentas'),
       makeBarConfig(ventasLabels, ventasValues, 'Ventas por día')
     );
 
+    // Gráfico 2: Resumen ingresos/egresos
     new Chart(
       document.getElementById('graficoResumen'),
       makeBarConfig(['Ingresos','Egresos'], [totalIngresos, totalEgresos], 'Resumen')
     );
 
+    // Gráfico 3: Top productos (pie) + leyenda enriquecida
     new Chart(
       document.getElementById('graficoTop'),
       makePieConfig(topLabels, topValues)
     );
 
-    // Lógica de formulario "Registrar venta" (si ese formulario está en esta página)
+    // Leyenda al lado con nombre completo + cantidad + %
     (function(){
-      const sel = document.getElementById('producto');
-      if (!sel) return;
-      const radios = document.querySelectorAll('input[name="modo"]');
-      const cantidad = document.getElementById('cantidad');
-      const precioUnit = document.getElementById('precio_unit');
-      const totalShown = document.getElementById('total_mostrado');
-      const totalHidden = document.getElementById('total_hidden');
-      const stockSpan = document.getElementById('stock_actual');
-      const infoPack = document.getElementById('info_pack');
-
-      function getSelectedData(){
-        const opt = sel.options[sel.selectedIndex];
-        if (!opt) return {};
-        return {
-          precioUnit: parseFloat(opt.getAttribute('data-precio-unit')) || 0,
-          stock: parseInt(opt.getAttribute('data-stock')) || 0,
-          precioPack: parseFloat(opt.getAttribute('data-precio-pack')) || 0,
-          unidadesPack: parseInt(opt.getAttribute('data-unidades-pack')) || 0
-        };
-      }
-
-      function updateUI(){
-        const data = getSelectedData();
-        const modo = (document.querySelector('input[name="modo"]:checked') || {}).value || 'unidad';
-
-        if (stockSpan) stockSpan.textContent = data.stock ? data.stock : '-';
-
-        if (modo === 'unidad') {
-          if (precioUnit) precioUnit.value = data.precioUnit ? data.precioUnit.toFixed(2) : '';
-          if (infoPack) infoPack.textContent = '';
-        } else {
-          if (precioUnit) precioUnit.value = data.precioPack ? data.precioPack.toFixed(2) : '';
-          if (infoPack) infoPack.textContent = data.unidadesPack ? `(1 paquete = ${data.unidadesPack} unid.)` : '(este producto no tiene paquete configurado)';
-        }
-
-        const cant = parseFloat((cantidad && cantidad.value) || 0);
-        const p = parseFloat((precioUnit && precioUnit.value) || 0);
-        const tot = cant * p;
-        if (totalShown)  totalShown.value  = tot ? tot.toFixed(2) : '';
-        if (totalHidden) totalHidden.value = tot ? tot.toFixed(2) : '';
-      }
-
-      sel.addEventListener('change', updateUI);
-      radios.forEach(r => r.addEventListener('change', updateUI));
-      if (cantidad) cantidad.addEventListener('input', updateUI);
-      updateUI();
+      const el = document.getElementById('leyendaTop');
+      if (!el) return;
+      const total = topValues.reduce((a,b)=>a+(+b||0), 0);
+      el.innerHTML = topLabels.map((lbl, i) => {
+        const val = +topValues[i] || 0;
+        const pct = total ? ((val*100/total).toFixed(1) + '%') : '0%';
+        const idx = (i+1).toString().padStart(2,'0');
+        return `
+          <div class="flex items-center justify-between gap-3 bg-black/30 rounded-md px-3 py-2 ring-1 ring-white/10">
+            <div class="truncate" title="${lbl}">
+              <span class="inline-block w-6 text-slate-400">${idx}.</span>
+              <span class="text-slate-100">${lbl}</span>
+            </div>
+            <div class="shrink-0 text-slate-200 font-semibold tabular-nums">${val}</div>
+            <div class="shrink-0 text-slate-400 text-xs tabular-nums">${pct}</div>
+          </div>
+        `;
+      }).join('');
     })();
   </script>
 {% endblock %}
