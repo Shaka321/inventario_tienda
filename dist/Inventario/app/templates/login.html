@@ -1,0 +1,80 @@
+{% extends "base_tw.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+{# --- Full-bleed wrapper para ocupar 100vw dentro de un layout centrado --- #}
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-h-screen">
+  <div class="relative flex min-h-screen w-full flex-col md:flex-row">
+
+    {# --- Panel izquierdo (form) --- #}
+    <div class="h-[50vh] md:h-screen md:w-1/2 bg-black text-white">
+      <div class="mx-auto flex h-full w-11/12 max-w-lg flex-col justify-center py-10">
+
+        <div class="mb-6">
+          <p class="text-2xl font-semibold">Login<span class="text-primary">|</span></p>
+          <p class="text-sm text-gray-300">Por favor inicia sesión para continuar<span class="text-primary">|</span></p>
+        </div>
+
+        <fieldset class="border-t border-solid border-gray-700">
+          <legend class="mx-auto px-2 text-center text-xs text-gray-400">
+            ingresa con usuario o email + contraseña
+          </legend>
+        </fieldset>
+
+        {# Flash messages #}
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            <div class="space-y-2 mt-4">
+              {% for cat, msg in messages %}
+                <div class="px-3 py-2 rounded-lg text-sm border
+                            {% if cat=='error' %}
+                              bg-red-50 text-red-700 border-red-200
+                            {% else %}
+                              bg-emerald-50 text-emerald-700 border-emerald-200
+                            {% endif %}">
+                  {{ msg }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {# Form login: preserva ?next= en la acción #}
+        <form action="{{ url_for('main.login', next=request.args.get('next')) }}" method="POST" class="mt-12">
+          <div>
+            <label class="mb-2.5 block text-lg font-extrabold mx-auto px-2 text-center" for="username">Usuario o Email</label>
+            <input type="text" id="username" name="username" required
+                   placeholder="admin  o  admin@example.com"
+                   class="inline-block w-full rounded-full bg-white p-2.5 leading-none text-black placeholder-indigo-900 shadow placeholder:opacity-30 focus:outline-none">
+          </div>
+
+          <div class="mt-6">
+            <label class="mb-2.5 block text-lg font-extrabold mx-auto px-2 text-center" for="password">Contraseña</label>
+            <input type="password" id="password" name="password" required
+                   placeholder="••••••••"
+                   class="inline-block w-full rounded-full bg-white p-2.5 leading-none text-black placeholder-indigo-900 shadow focus:outline-none">
+          </div>
+
+          <div class="mt-12">
+            <button class="w-full rounded-full bg-orange-600 p-4 font-semibold hover:bg-orange-700 transition mx-auto px-2 text-center inline-block">
+              Entrar
+            </button>
+          </div>
+        </form>
+
+        <p class="mt-4 text-[11px] text-gray-400">
+          Usuario inicial: <b>admin</b> (o <b>admin@example.com</b>) / Clave: <b>admin123</b>.
+        </p>
+      </div>
+    </div>
+
+    {# --- Panel derecho (imagen) --- #}
+    <div class="h-[50vh] md:h-screen md:w-1/2">
+      <img src="https://images.pexels.com/photos/2523959/pexels-photo-2523959.jpeg"
+           alt="Hero"
+           class="h-full w-full object-cover">
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gastos</title>
+</head>
+<body>
+  <h1>💸 Gastos</h1>
+  <table border="1" cellpadding="5">
+    <tr><th>Fecha</th><th>Motivo</th><th>Monto</th></tr>
+    {% for g in gastos %}
+      <tr>
+        <td>{{ g['fecha'] }}</td>
+        <td>{{ g['motivo'] }}</td>
+        <td>{{ g['monto'] }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">Sin registros</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

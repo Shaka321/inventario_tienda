@@ -1,0 +1,73 @@
+{% extends "base_tw.html" %}
+{% block title %}Nueva compra{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">📦 Nueva compra</h1>
+
+<form method="POST" class="space-y-6">
+  <div class="bg-white p-4 rounded-xl shadow grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="md:col-span-2">
+      <label class="font-semibold">SKU</label>
+      <select name="sku_id" class="w-full border rounded-lg p-2" required>
+        {% for s in skus %}<option value="{{ s['id'] }}">{{ s['label'] }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="font-semibold">Empaque</label>
+      <select name="packaging_level" class="w-full border rounded-lg p-2">
+        <option>UNIT</option><option>PACK</option><option>CASE</option><option>BUNDLE</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-semibold">Cantidad (empaques)</label>
+      <input name="qty_packs" type="number" step="1" value="1" class="w-full border rounded-lg p-2" required>
+    </div>
+    <div>
+      <label class="font-semibold">Costo por UN (BOB)</label>
+      <input name="unit_cost" type="number" step="0.0001" class="w-full border rounded-lg p-2" required>
+    </div>
+    <div>
+      <label class="font-semibold">Proveedor</label>
+      <input name="supplier" class="w-full border rounded-lg p-2" placeholder="Opcional">
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-xl shadow">
+    <label class="inline-flex items-center gap-2">
+      <input type="checkbox" name="is_mixed" value="1" id="isMixed">
+      <span>Caja mixta / BUNDLE compuesto (desglosar por hijos)</span>
+    </label>
+
+    <div id="mixBox" class="hidden mt-3">
+      <div class="text-sm text-gray-600 mb-2">Agrega hijos (SKU) y unidades por cada caja. Se multiplicará por la cantidad de cajas.</div>
+      <table class="w-full text-sm">
+        <thead><tr><th>SKU hijo</th><th>Unidades por caja</th><th></th></tr></thead>
+        <tbody id="mixBody">
+          <tr>
+            <td><input name="child_sku_id[]" class="border rounded p-1" placeholder="ID SKU (hijo)"></td>
+            <td><input name="child_qty_units[]" class="border rounded p-1" placeholder="ej: 48"></td>
+            <td><button type="button" class="px-2 py-1 border rounded addRow">+</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="text-xs text-gray-500 mt-2">Tip: luego lo cambiamos por un selector con búsqueda.</p>
+    </div>
+  </div>
+
+  <div class="flex justify-end">
+    <button class="px-4 py-2 rounded-lg bg-green-600 text-white">Guardar compra</button>
+  </div>
+</form>
+
+<script>
+const isMixed = document.getElementById('isMixed');
+const mixBox = document.getElementById('mixBox');
+isMixed.onchange = () => mixBox.classList.toggle('hidden', !isMixed.checked);
+document.getElementById('mixBody').addEventListener('click', e=>{
+  if(e.target.classList.contains('addRow')){
+    const tr = e.target.closest('tr').cloneNode(true);
+    tr.querySelectorAll('input').forEach(i=>i.value='');
+    e.target.closest('tbody').appendChild(tr);
+  }
+});
+</script>
+{% endblock %}

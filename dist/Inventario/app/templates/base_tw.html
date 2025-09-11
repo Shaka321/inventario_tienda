@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Sistema Inventario{% endblock %}</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',   // Indigo-600 (alineado con el UI oscuro)
+            secondary: '#22c55e', // Emerald-500
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    @supports (font-variation-settings: normal) {
+      :root { font-family: 'Inter var', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    }
+  </style>
+
+  <!-- Tu CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
+  <!-- Flowbite (defer) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+
+  {% block head %}{% endblock %}
+  {% block head_extra %}{% endblock %}
+</head>
+
+{# Ocultar navbar en login e inicio #}
+{% set _endpoint = (request.endpoint or '') %}
+{% set hide_nav = _endpoint in ['main.login', 'main.home'] %}
+
+<body class="bg-black text-slate-300 antialiased">
+  {% if not hide_nav %}
+    <!-- Navbar oscuro, translúcido, fijo y centrado -->
+    <nav
+      class="fixed top-3 z-50 right-1/2 translate-x-1/2 w-[calc(100vw-8%)] md:w-[calc(100vw-6%)]"
+      aria-label="Top Navigation"
+    >
+      <div class="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl px-3 py-2 md:px-4 md:py-3 text-white shadow-lg">
+        <!-- Izquierda: breadcrumb + título -->
+        <div class="ml-1">
+          <div class="hidden md:block text-[11px] text-white/70">
+            {% block breadcrumb %}
+              <a href="{{ url_for('main.home') }}" class="hover:underline">Inicio</a>
+              <span class="mx-1">/</span>
+              <span class="capitalize">Panel</span>
+            {% endblock %}
+          </div>
+          <a href="{{ url_for('main.home') }}" class="block text-lg md:text-2xl font-bold leading-tight bg-gradient-to-br from-white via-white/70 to-transparent bg-clip-text text-transparent">
+            🧼 Inventario
+          </a>
+        </div>
+
+        <!-- Derecha: acciones -->
+        <div class="flex items-center gap-2 md:gap-3">
+          <a href="{{ url_for('main.home') }}"
+             class="inline-flex items-center justify-center px-3 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition">
+            Menú
+          </a>
+
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.logout') }}"
+               class="inline-flex items-center justify-center px-3 py-1.5 rounded-full border border-white/10 text-red-300 hover:bg-white/10 transition">
+              Cerrar sesión
+            </a>
+          {% else %}
+            <a href="{{ url_for('main.login') }}"
+               class="px-3 py-1.5 rounded-full bg-white text-black hover:bg-gray-200 transition">
+              Iniciar sesión
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+  {% endif %}
+
+  <!-- Contenedor principal -->
+  <main class="{% if hide_nav %}p-0 max-w-none{% else %}mx-auto max-w-7xl px-3 md:px-6 pt-28 pb-10{% endif %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}
+    <div class="mx-auto max-w-5xl my-3 px-3">
+      {% for cat, msg in msgs %}
+        <div class="mb-2 rounded-lg px-4 py-2 text-sm
+                    {% if cat=='error' %} bg-rose-900/30 text-rose-200 ring-1 ring-rose-800/60
+                    {% elif cat=='success' %} bg-emerald-900/30 text-emerald-200 ring-1 ring-emerald-800/60
+                    {% else %} bg-white/10 text-slate-100 ring-1 ring-white/10 {% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+</html>

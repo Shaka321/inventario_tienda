@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Finanzas y Reportes</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Módulo de Finanzas y Reportes</h1>
+
+        <div class="card">
+            <form method="GET" action="/finanzas"
+                  style="grid-template-columns: auto auto auto auto auto; align-items:center;">
+              <label><b>Rango:</b></label>
+          
+              <select name="r" id="rango">
+                <option value="hoy"            {% if r == 'hoy' %}selected{% endif %}>Hoy</option>
+                <option value="semana"         {% if r == 'semana' %}selected{% endif %}>Últimos 7 días</option>
+                <option value="mes"            {% if r == 'mes' %}selected{% endif %}>Mes actual</option>
+                <option value="personalizado"  {% if r == 'personalizado' %}selected{% endif %}>Personalizado</option>
+              </select>
+                    <!-- Export CSV en Finanzas -->
+        <div class="card" style="display:flex; gap:16px; align-items:center;">
+            <div><b>Exportar CSV:</b></div>
+            <!-- Respeta el rango seleccionado -->
+            <a href="/export/ventas_filtrado.csv?r={{ r }}&desde={{ desde }}&hasta={{ hasta }}">⬇️ Ventas (filtrado)</a>
+            <a href="/export/gastos_filtrado.csv?r={{ r }}&desde={{ desde }}&hasta={{ hasta }}">⬇️ Gastos (filtrado)</a>
+        
+            <!-- Export completo (toda la tabla) -->
+            <span style="margin-left:auto;">
+            <a href="/export/ventas.csv">Todo ventas</a> ·
+            <a href="/export/gastos.csv">Todo gastos</a>
+            </span>
+        </div>
+            
+              <!-- Nota: usamos clase "hidden" en lugar de style con Jinja -->
+              <div id="fechas" class="{% if r != 'personalizado' %}hidden{% endif %}">
+                <input type="date" name="desde" value="{{ desde }}">
+                <input type="date" name="hasta" value="{{ hasta }}">
+              </div>
+          
+              <button type="submit">Aplicar</button>
+              <span style="margin-left:10px; color:#555;">
+                {{ rango_label }}: {{ desde }} → {{ hasta }}
+              </span>
+            </form>
+          </div>
+          
+          <script>
+            // mostrar/ocultar inputs de fecha si es personalizado
+            const rangoSel = document.getElementById('rango');
+            const fechasDiv = document.getElementById('fechas');
+            rangoSel.addEventListener('change', function () {
+              if (this.value === 'personalizado') {
+                fechasDiv.classList.remove('hidden');
+              } else {
+                fechasDiv.classList.add('hidden');
+              }
+            });
+          </script>       
+          
+        <div class="card">
+            <h2>💰 Ventas Registradas</h2>
+            <table>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Total</th>
+                </tr>
+                {% for v in ventas %}
+                <tr>
+                    <td>{{ v[0] }}</td>
+                    <td>{{ v[1] }}</td>
+                    <td>{{ v[2] }}</td>
+                    <td>{{ v[3] }}</td>
+                    <td>{{ v[4] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>💸 Gastos Registrados</h2>
+            <table>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Motivo</th>
+                    <th>Monto</th>
+                </tr>
+                {% for g in gastos %}
+                <tr>
+                    <td>{{ g[0] }}</td>
+                    <td>{{ g[1] }}</td>
+                    <td>{{ g[2] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>➕ Registrar una Venta</h2>
+            <form action="/registrar_venta" method="POST">
+                <select id="producto" name="producto" required>
+                    <option value="">-- Selecciona un producto --</option>
+                    {% for p in productos %}
+                      {# p[0]=nombre, p[1]=precio_unit, p[2]=stock, p[3]=precio_paquete, p[4]=unidades_por_paquete #}
+                      <option
+                        value="{{ p[0] }}"
+                        data-precio-unit="{{ p[1] or '' }}"
+                        data-stock="{{ p[2] or 0 }}"
+                        data-precio-pack="{{ p[3] or '' }}"
+                        data-unidades-pack="{{ p[4] or '' }}"
+                      >
+                        {{ p[0] }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <p><strong>Stock actual:</strong> <span id="stock_actual">-</span></p>
+                  <div style="display:flex; gap:16px; align-items:center;">
+                    <label><input type="radio" name="modo" value="unidad" checked> Por unidad</label>
+                    <label><input type="radio" name="modo" value="paquete"> Por paquete</label>
+                    <span id="info_pack" style="color:#555; font-size:14px;"></span>
+                  </div>
+                  
+                  <input type="number" name="cantidad" id="cantidad" placeholder="Cantidad" min="1" required>
+                  
+                  <input type="number" step="0.01" name="precio_unit" id="precio_unit" placeholder="Precio (auto)" readonly>
+                  <input type="text" id="total_mostrado" placeholder="Total" readonly>
+                  <input type="hidden" name="total" id="total_hidden">
+                  
+                  <button type="submit">Registrar Venta</button>                  
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>➖ Registrar un Gasto</h2>
+            <form action="/registrar_gasto" method="POST">
+                <input type="text" name="motivo" placeholder="Motivo del gasto" required>
+                <input type="number" step="0.01" name="monto" placeholder="Monto" required>
+                <button type="submit">Registrar Gasto</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h2>📥 Reposición de Stock</h2>
+            <form action="/reposicion" method="POST">
+                <select name="producto_repos" required>
+                    <option value="">-- Selecciona un producto --</option>
+                    {% for p in productos %}
+                        <option value="{{ p[0] }}">{{ p[0] }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="cantidad_repos" placeholder="Cantidad a reponer" required>
+                <button type="submit">Reponer</button>
+            </form>
+        </div>
+              
+        <div class="card">
+            <h2>📊 Ventas por Día</h2>
+            <canvas id="graficoVentas" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Ingresos vs Egresos</h2>
+            <canvas id="graficoResumen" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>📈 Resumen Financiero</h2>
+            <p><strong>Total de Ventas:</strong> {{ total_ventas }}</p>
+            <p><strong>Total de Gastos:</strong> {{ total_gastos }}</p>
+            <p><strong>Ganancia Neta:</strong> {{ ganancia_neta }}</p>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    (function() {
+        const ventasData = JSON.parse('{{ ventas | tojson | safe }}');
+        const gastosData = JSON.parse('{{ gastos | tojson | safe }}');
+
+        // === Ventas agrupadas por fecha ===
+        const ventasPorFecha = {};
+        ventasData.forEach(v => {
+            const fecha = v[0].split(' ')[0];
+            ventasPorFecha[fecha] = (ventasPorFecha[fecha] || 0) + v[4];
+        });
+
+        const fechasVentas = Object.keys(ventasPorFecha);
+        const montosVentas = Object.values(ventasPorFecha);
+
+        // === Ingresos y egresos totales ===
+        const totalIngresos = parseFloat('{{ total_ventas }}');
+        const totalEgresos = parseFloat('{{ total_gastos }}');
+
+        window.onload = function () {
+            // Gráfico de ventas por día
+            new Chart(document.getElementById("graficoVentas"), {
+                type: 'bar',
+                data: {
+                    labels: fechasVentas,
+                    datasets: [{
+                        label: 'Ventas por día',
+                        data: montosVentas,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+
+            // Gráfico de ingresos vs egresos
+            new Chart(document.getElementById("graficoResumen"), {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Egresos'],
+                    datasets: [{
+                        label: 'Resumen',
+                        data: [totalIngresos, totalEgresos],
+                        backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
+                        borderColor: ['rgba(40, 167, 69, 1)', 'rgba(220, 53, 69, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+        };
+    })();
+    <div class="card">
+        <h2>🥧 Productos más vendidos (Top 5)</h2>
+        <canvas id="graficoTop" width="400" height="220"></canvas>
+    </div>
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    (function(){
+    // Datos desde Flask (ya filtrados por fecha)
+    const ventasLabels  = JSON.parse('{{ ventas_labels | tojson | safe }}');
+    const ventasValues  = JSON.parse('{{ ventas_values | tojson | safe }}');
+    const totalIngresos = parseFloat('{{ total_ventas }}');
+    const totalEgresos  = parseFloat('{{ total_gastos }}');
+    const topLabels     = JSON.parse('{{ top_labels | tojson | safe }}');
+    const topValues     = JSON.parse('{{ top_values | tojson | safe }}');
+
+    window.onload = function(){
+        // Ventas por día
+        new Chart(document.getElementById('graficoVentas'), {
+        type: 'bar',
+        data: {
+            labels: ventasLabels,
+            datasets: [{ label: 'Ventas por día', data: ventasValues }]
+        }
+        });
+
+        // Ingresos vs Egresos
+        new Chart(document.getElementById('graficoResumen'), {
+        type: 'bar',
+        data: {
+            labels: ['Ingresos', 'Egresos'],
+            datasets: [{ label: 'Resumen', data: [totalIngresos, totalEgresos] }]
+        }
+        });
+
+        // Top productos (pastel)
+        new Chart(document.getElementById('graficoTop'), {
+        type: 'pie',
+        data: {
+            labels: topLabels,
+            datasets: [{ label: 'Unidades', data: topValues }]
+        }
+        });
+    };
+    })();
+
+    (function(){
+    const sel = document.getElementById('producto');
+    const radios = document.querySelectorAll('input[name="modo"]');
+    const cantidad = document.getElementById('cantidad');
+    const precioUnit = document.getElementById('precio_unit');
+    const totalShown = document.getElementById('total_mostrado');
+    const totalHidden = document.getElementById('total_hidden');
+    const stockSpan = document.getElementById('stock_actual');
+    const infoPack = document.getElementById('info_pack');
+
+    function getSelectedData(){
+        const opt = sel.options[sel.selectedIndex];
+        if (!opt) return {};
+        return {
+        precioUnit: parseFloat(opt.getAttribute('data-precio-unit')) || 0,
+        stock: parseInt(opt.getAttribute('data-stock')) || 0,
+        precioPack: parseFloat(opt.getAttribute('data-precio-pack')) || 0,
+        unidadesPack: parseInt(opt.getAttribute('data-unidades-pack')) || 0
+        };
+    }
+
+    function updateUI(){
+        const data = getSelectedData();
+        const modo = document.querySelector('input[name="modo"]:checked').value;
+
+        stockSpan.textContent = data.stock ? data.stock : '-';
+
+        if (modo === 'unidad') {
+        precioUnit.value = data.precioUnit ? data.precioUnit.toFixed(2) : '';
+        infoPack.textContent = '';
+        } else {
+        precioUnit.value = data.precioPack ? data.precioPack.toFixed(2) : '';
+        infoPack.textContent = data.unidadesPack ? `(1 paquete = ${data.unidadesPack} unid.)` : '(este producto no tiene paquete configurado)';
+        }
+
+        // total
+        const cant = parseFloat(cantidad.value) || 0;
+        const p = parseFloat(precioUnit.value) || 0;
+        const tot = cant * p;
+        totalShown.value = tot ? tot.toFixed(2) : '';
+        totalHidden.value = tot ? tot.toFixed(2) : '';
+    }
+
+    sel.addEventListener('change', updateUI);
+    radios.forEach(r => r.addEventListener('change', updateUI));
+    cantidad.addEventListener('input', updateUI);
+
+    // primera carga
+    updateUI();
+    })();
+    </script> 
+        
+</body>
+<div class="container" style="max-width:900px;margin:auto">
+    <p style="text-align:right; margin:0 0 10px 0;">
+      <a href="/" style="margin-right:10px;">Inventario</a>
+      <a href="/finanzas">Finanzas</a>
+    </p>
+  </div> 
+</html>

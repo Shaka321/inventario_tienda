@@ -1,0 +1,103 @@
+{% extends "base_tw.html" %}
+{% block title %}Admin · Base de Datos{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- FULL-BLEED para ocupar 100% del ancho visual -->
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
+
+      <!-- CONTENT (100% ancho sin sidebar) -->
+      <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+            🗂️ Panel de Base de Datos
+          </h1>
+          <a href="/export/{{ tabla }}.csv"
+             class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold inline-flex items-center gap-2 ring-1 ring-white/10">
+            ⬇️ <span>Exportar {{ tabla }}.csv</span>
+          </a>
+        </div>
+
+        <!-- Selector de tabla -->
+        <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4 mb-6">
+          <form method="GET" action="{{ url_for('main.admin') }}" class="flex flex-wrap items-center gap-3">
+            <label class="font-semibold text-slate-200">Tabla:</label>
+            <select name="tabla"
+                    class="rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onchange="this.form.submit()">
+              {% for t in tablas %}
+                <option value="{{ t }}" {% if t==tabla %}selected{% endif %}>{{ t|capitalize }}</option>
+              {% endfor %}
+            </select>
+            <input type="hidden" name="page" value="1">
+            <div class="ms-auto text-sm text-slate-400">
+              Total filas: <b class="text-slate-200">{{ total }}</b>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabla -->
+        <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4">
+          <div class="overflow-x-auto rounded-lg ring-1 ring-white/10 bg-white/5">
+            <table class="w-full text-sm bg-transparent">
+              <thead>
+                <tr class="bg-black/60 text-left text-slate-200">
+                  {% for c in cols %}<th class="p-3 font-semibold">{{ c }}</th>{% endfor %}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for r in rows %}
+                <tr class="hover:bg-white/5 transition-colors">
+                  {% for i in range(cols|length) %}
+                    <td class="p-3 text-slate-300">{{ r[i] }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+                {% if rows|length == 0 %}
+                  <tr><td class="p-4 text-center text-slate-400" colspan="{{ cols|length }}">Sin datos</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación -->
+          <div class="flex items-center gap-3 mt-4">
+            {% set last_page = (total // page_size) + (1 if total % page_size > 0 else 0) %}
+
+            {% if page > 1 %}
+              <a href="{{ base_url }}?tabla={{ tabla }}&page={{ page - 1 }}"
+                 class="px-3 py-2 rounded-lg ring-1 ring-white/10 bg-white/10 hover:bg-white/20">« Anterior</a>
+            {% else %}
+              <span class="px-3 py-2 rounded-lg ring-1 ring-white/10 text-slate-500 cursor-not-allowed">« Anterior</span>
+            {% endif %}
+
+            <span class="text-sm text-slate-400">
+              Página <b class="text-slate-200">{{ page }}</b> / <b class="text-slate-200">{{ last_page if last_page>0 else 1 }}</b>
+            </span>
+
+            {% if page < last_page %}
+              <a href="{{ base_url }}?tabla={{ tabla }}&page={{ page + 1 }}"
+                 class="px-3 py-2 rounded-lg ring-1 ring-white/10 bg-white/10 hover:bg-white/20">Siguiente »</a>
+            {% else %}
+              <span class="px-3 py-2 rounded-lg ring-1 ring-white/10 text-slate-500 cursor-not-allowed">Siguiente »</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}

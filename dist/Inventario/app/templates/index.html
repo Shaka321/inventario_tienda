@@ -1,0 +1,183 @@
+{% extends "base_tw.html" %}
+{% block title %}Inventario · Productos{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Full-bleed para ocupar todo el ancho, por encima del max-w del layout -->
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <!-- grid a TODO el ancho -->
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <!-- CONTENT -->
+    <main id="content" class="reset-dark bg-white/10 col-span-12 md:col-span-9 rounded-lg p-6 ring-1 ring-white/10">
+
+      <!-- Encabezado -->
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+          📦 Inventario de Productos
+        </h1>
+        <a href="{{ url_for('main.export_productos_csv', q=q|default('')) }}"
+           class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold inline-flex items-center gap-2 ring-1 ring-white/10">
+          ⬇️ <span>Exportar (CSV)</span>
+        </a>
+      </div>
+
+      <!-- Banner bajo stock -->
+      {% if (low_count|default(0)) > 0 %}
+      <div class="bg-red-900/20 rounded-lg ring-1 ring-red-800/40 p-4 mb-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="font-semibold text-red-300">
+            ⚠ {{ low_count }} producto{% if low_count!=1 %}s{% endif %} con bajo stock (≤ {{ umbral|default(5) }})
+          </div>
+          <div class="ms-auto flex gap-2">
+            <a href="{{ url_for('main.inventario', solo_bajo=1, q=q|default(''), umbral=umbral|default(5)) }}"
+               class="px-3 py-2 rounded-lg border border-red-800/50 text-red-200 hover:bg-red-900/30 font-semibold">
+              Ver solo bajo stock
+            </a>
+            <a href="{{ url_for('main.inventario', q=q|default(''), umbral=umbral|default(5)) }}"
+               class="px-3 py-2 rounded-lg border border-white/10 text-slate-200 hover:bg-white/10 font-semibold">
+              Ver todos
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Búsqueda -->
+      <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4 mb-4">
+        <form action="{{ url_for('main.inventario') }}" method="GET" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          <input class="md:col-span-8 rounded-lg bg-black/30 text-slate-200 placeholder:text-slate-400 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 px-3 py-2"
+                 type="text" name="q" placeholder="Buscar por nombre, categoría, código o variante…"
+                 value="{{ q|default('') }}" />
+          <button class="md:col-span-2 px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg font-semibold">🔎 Buscar</button>
+          <a href="{{ url_for('main.inventario') }}" class="md:col-span-2 text-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 font-semibold">Limpiar</a>
+        </form>
+        <p class="mt-2 text-sm text-slate-400">
+          {{ productos|length }} resultado{{ '' if (productos|length)==1 else 's' }}{% if q %} para “<b class="text-slate-200">{{ q }}</b>”{% endif %}
+        </p>
+      </div>
+
+      <!-- Configurar umbral -->
+      <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4 mb-6">
+        <form action="{{ url_for('main.actualizar_umbral') }}" method="POST" class="grid grid-cols-1 md:grid-cols-6 items-center gap-3">
+          <!-- Conserva filtros al guardar -->
+          <input type="hidden" name="q" value="{{ q|default('') }}">
+          <input type="hidden" name="solo_bajo" value="{{ solo_bajo|default('0') }}">
+
+          <label class="md:col-span-2 font-semibold text-slate-200">Umbral bajo stock</label>
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                 type="number" name="umbral" min="0" value="{{ umbral|default(5) }}">
+          <button class="md:col-span-2 px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg font-semibold">
+            Guardar umbral
+          </button>
+        </form>
+      </div>
+
+      <!-- Agregar producto -->
+      <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4 mb-8">
+        <h2 class="text-lg font-semibold mb-3 text-slate-100">➕ Agregar producto</h2>
+        <form action="{{ url_for('main.agregar') }}" method="POST" class="grid md:grid-cols-6 gap-4">
+          <!-- Nombre y categoría -->
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="text" name="nombre" placeholder="Nombre del producto (ej. Shampoo Ballerina)" required>
+          <input class="md:col-span-1 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="text" name="categoria" placeholder="Categoría">
+
+          <!-- Tamaño + UOM (opcionales) -->
+          <input class="md:col-span-1 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="number" step="0.001" min="0" name="tamanio_valor" placeholder="Tamaño (ej. 40)">
+          <select name="tamanio_uom" class="md:col-span-1 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Unidad</option>
+            <option>ML</option><option>L</option>
+            <option>G</option><option>KG</option>
+            <option>UN</option>
+          </select>
+
+          <!-- Variante (opcional) -->
+          <input class="md:col-span-1 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="text" name="variante" placeholder="Variante (sabor/color)">
+
+          <!-- Precio / Cantidad / Proveedor -->
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="number" step="0.01" name="precio" placeholder="Precio unitario" required>
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="number" name="cantidad" placeholder="Cantidad en stock" required>
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="text" name="proveedor" placeholder="Proveedor">
+
+          <!-- Opcionales legacy -->
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="number" step="0.01" name="precio_paquete" placeholder="Precio por paquete (opcional)">
+          <input class="md:col-span-2 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="number" name="unidades_por_paquete" placeholder="Unidades por paquete (opcional)">
+
+          <!-- Código -->
+          <input class="md:col-span-4 rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="text" name="codigo" placeholder="Código de barras (vacío = se genera)">
+
+          <div class="md:col-span-2">
+            <button class="w-full px-4 py-2 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-lg font-semibold">Guardar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de productos -->
+      <h2 class="text-xl font-semibold mb-3 text-slate-100">📋 Lista de Productos</h2>
+      <div class="overflow-x-auto rounded-lg ring-1 ring-white/10 bg-white/5">
+        <table class="w-full text-sm bg-transparent">
+          <thead>
+            <tr class="bg-black/60 text-left text-slate-200">
+              <th class="p-3 font-semibold">ID</th>
+              <th class="p-3 font-semibold">Nombre</th>
+              <th class="p-3 font-semibold">Categoría</th>
+              <th class="p-3 font-semibold">Tamaño</th>
+              <th class="p-3 font-semibold">Variante</th>
+              <th class="p-3 font-semibold">Precio</th>
+              <th class="p-3 font-semibold">Cantidad</th>
+              <th class="p-3 font-semibold">Proveedor</th>
+              <th class="p-3 font-semibold">Código</th>
+              <th class="p-3 font-semibold">Fecha</th>
+              <th class="p-3 font-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {% for p in productos %}
+            <tr class="hover:bg-white/5 transition-colors {{ 'bg-red-900/20' if (p['cantidad']|default(0)) <= (umbral|default(5)) else '' }}">
+              <td class="p-3 text-slate-300">{{ p['id'] }}</td>
+              <td class="p-3 text-slate-200">{{ p['nombre'] }}</td>
+              <td class="p-3 text-slate-300">{{ p['categoria'] }}</td>
+              <td class="p-3 text-slate-300">
+                {% if p['tamanio_valor'] %}
+                  {{ p['tamanio_valor']|float }} {{ p['tamanio_uom'] }}
+                {% else %}—{% endif %}
+              </td>
+              <td class="p-3 text-slate-300">{{ p['variante'] or '—' }}</td>
+              <td class="p-3 text-slate-300">{{ p['precio'] }}</td>
+              <td class="p-3 text-slate-200">
+                <div class="inline-flex items-center gap-2">
+                  <span>{{ p['cantidad'] }}</span>
+                  {% if (p['cantidad']|default(0)) <= (umbral|default(5)) %}
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white">Bajo</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="p-3 text-slate-300">{{ p['proveedor'] }}</td>
+              <td class="p-3 text-slate-300">{{ p['codigo'] }}</td>
+              <td class="p-3 text-slate-300">{{ p['fecha'] }}</td>
+              <td class="p-3">
+                <div class="flex items-center gap-2">
+                  <a href="{{ url_for('main.editar_producto', pid=p['id']) }}"
+                     class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 ring-1 ring-white/10" title="Editar">✏️</a>
+                  <form action="{{ url_for('main.eliminar_producto', pid=p['id']) }}"
+                        method="POST" onsubmit="return confirm('¿Eliminar este producto?');" class="inline">
+                    <button class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 ring-1 ring-white/10" title="Eliminar">🗑️</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

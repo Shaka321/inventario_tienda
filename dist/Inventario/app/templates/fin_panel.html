@@ -1,0 +1,239 @@
+{% extends "base_tw.html" %}
+{% block title %}Finanzas · Panel{% endblock %}
+
+{% block head_extra %}
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root { font-family: 'Inter', system-ui, sans-serif; }
+    @supports (font-variation-settings: normal) {
+      :root { font-family: 'Inter var', system-ui, sans-serif; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<!-- Full-bleed para ocupar 100vw -->
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen antialiased bg-black text-slate-300 min-h-screen py-4">
+  <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl my-10 px-2">
+
+    <!-- CONTENT (100% ancho sin sidebar) -->
+    <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+
+      <!-- Rango y Export -->
+      <div class="mb-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-xl">📊 Módulo de Finanzas y Reportes</h2>
+          <a href="{{ url_for('main.fin_venta_form') }}"
+             class="px-4 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold">
+            ➕ Registrar venta
+          </a>
+        </div>
+
+        <form method="GET" action="{{ url_for('main.fin_panel') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-3">
+            <label class="text-sm text-slate-400">Rango</label>
+            <select name="r" id="rango" class="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2">
+              <option value="todo"         {% if r=='todo' %}selected{% endif %}>Todo</option>
+              <option value="hoy"          {% if r=='hoy' %}selected{% endif %}>Hoy</option>
+              <option value="semana"       {% if r=='semana' %}selected{% endif %}>Últimos 7 días</option>
+              <option value="mes"          {% if r=='mes' %}selected{% endif %}>Mes actual</option>
+              <option value="personalizado" {% if r=='personalizado' %}selected{% endif %}>Personalizado</option>
+            </select>
+          </div>
+
+          <div id="fechas" class="md:col-span-5 grid grid-cols-2 gap-3 {% if r!='personalizado' %}hidden{% endif %}">
+            <div>
+              <label class="text-sm text-slate-400">Desde</label>
+              <input type="date" name="desde" value="{{ desde }}" class="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2">
+            </div>
+            <div>
+              <label class="text-sm text-slate-400">Hasta</label>
+              <input type="date" name="hasta" value="{{ hasta }}" class="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2">
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <button class="w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 font-semibold">Aplicar</button>
+          </div>
+
+          <div class="md:col-span-12 text-sm text-slate-400">
+            {{ rango_label }}: <span class="text-slate-200">{{ desde }}</span> → <span class="text-slate-200">{{ hasta }}</span>
+          </div>
+        </form>
+
+        <!-- Export -->
+        <div class="flex flex-wrap gap-2 items-center bg-black/40 border border-white/10 rounded-lg p-3">
+          <div class="text-sm text-slate-400">Exportar CSV:</div>
+          <a class="px-3 py-1.5 rounded-lg bg-emerald-700/70 hover:bg-emerald-600 font-semibold"
+             href="{{ url_for('main.export_ventas_filtrado') }}?desde={{ desde }}&hasta={{ hasta }}">⬇️ Ventas (filtrado)</a>
+          <a class="px-3 py-1.5 rounded-lg bg-rose-700/70 hover:bg-rose-600 font-semibold"
+             href="{{ url_for('main.export_gastos_filtrado') }}?desde={{ desde }}&hasta={{ hasta }}">⬇️ Gastos (filtrado)</a>
+          <span class="ms-auto text-sm text-slate-400">
+            <a class="hover:underline" href="{{ url_for('main.export_ventas_filtrado') }}">Todo ventas</a> ·
+            <a class="hover:underline" href="{{ url_for('main.export_gastos_filtrado') }}">Todo gastos</a>
+          </span>
+        </div>
+      </div>
+
+      <!-- Tarjetas resumen -->
+      <div class="grid gird-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-black/60 p-6 rounded-lg">
+          <p class="text-emerald-300 text-sm font-medium uppercase">Ingresos</p>
+          <p class="text-white font-bold text-3xl mt-1">{{ '%.2f'|format(total_ventas|float) }}</p>
+        </div>
+        <div class="bg-black/60 p-6 rounded-lg">
+          <p class="text-rose-300 text-sm font-medium uppercase">Gastos</p>
+          <p class="text-white font-bold text-3xl mt-1">{{ '%.2f'|format(total_gastos|float) }}</p>
+        </div>
+        <div class="bg-black/60 p-6 rounded-lg">
+          <p class="text-indigo-300 text-sm font-medium uppercase">Ganancia neta</p>
+          <p class="text-white font-bold text-3xl mt-1">{{ '%.2f'|format(ganancia_neta|float) }}</p>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-black/60 p-6 rounded-lg">
+          <h3 class="font-bold mb-3">Ventas por día</h3>
+          <canvas id="graficoVentas" height="200"></canvas>
+        </div>
+
+        <div class="bg-black/60 p-6 rounded-lg">
+          <h3 class="font-bold mb-3">Ingresos vs Egresos</h3>
+          <canvas id="graficoResumen" height="200"></canvas>
+        </div>
+
+        <!-- TOP productos: gráfico + leyenda enriquecida al lado -->
+        <div class="bg-black/60 p-6 rounded-lg lg:col-span-2">
+          <h3 class="font-bold mb-3">Productos más vendidos (Top 5)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div class="h-56">
+              <canvas id="graficoTop" height="220"></canvas>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 mb-2">
+                * Las etiquetas incluyen <b>tamaño</b>/<b>variante</b> y <b>ID</b> cuando el producto existe en inventario;
+                si no hay match verás <code>[sin ID]</code>.
+              </p>
+              <div id="leyendaTop" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Paquete de datos seguro para JS -->
+  <script id="fin-data" type="application/json">
+  {{ {
+      "ventas_labels": ventas_labels | default([], true),
+      "ventas_values": ventas_values | default([], true),
+      "total_ventas":  total_ventas  | default(0,  true),
+      "total_gastos":  total_gastos  | default(0,  true),
+      "top_labels":    top_labels    | default([], true),
+      "top_values":    top_values    | default([], true)
+    } | tojson }}
+  </script>
+
+  <script>
+    // Mostrar/ocultar fechas personalizadas
+    (function(){
+      const rangoSel = document.getElementById('rango');
+      const fechasDiv = document.getElementById('fechas');
+      if (rangoSel) {
+        rangoSel.addEventListener('change', function () {
+          if (this.value === 'personalizado') fechasDiv.classList.remove('hidden');
+          else fechasDiv.classList.add('hidden');
+        });
+      }
+    })();
+
+    // ===== Cargar datos desde el <script type="application/json"> =====
+    const finDataEl = document.getElementById('fin-data');
+    let FIN = {};
+    try { FIN = JSON.parse(finDataEl?.textContent || "{}"); } catch (e) { FIN = {}; }
+
+    const ventasLabels  = Array.isArray(FIN.ventas_labels) ? FIN.ventas_labels : [];
+    const ventasValues  = Array.isArray(FIN.ventas_values) ? FIN.ventas_values : [];
+    const totalIngresos = typeof FIN.total_ventas === "number" ? FIN.total_ventas : 0;
+    const totalEgresos  = typeof FIN.total_gastos === "number" ? FIN.total_gastos : 0;
+    const topLabels     = Array.isArray(FIN.top_labels) ? FIN.top_labels : [];
+    const topValues     = Array.isArray(FIN.top_values) ? FIN.top_values : [];
+
+    const gridColor = 'rgba(255,255,255,0.1)';
+    const tickColor = 'rgba(255,255,255,0.7)';
+
+    function makeBarConfig(labels, data, label){
+      return {
+        type: 'bar',
+        data: { labels, datasets: [{ label, data, borderWidth: 1 }]},
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e5e7eb' } } },
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: tickColor }},
+            y: { grid: { color: gridColor }, ticks: { color: tickColor }}
+          }
+        }
+      };
+    }
+
+    function makePieConfig(labels, data){
+      return {
+        type: 'pie',
+        data: { labels, datasets: [{ data }]},
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e5e7eb' } } }
+        }
+      };
+    }
+
+    // Gráfico 1: Ventas por día
+    new Chart(
+      document.getElementById('graficoVentas'),
+      makeBarConfig(ventasLabels, ventasValues, 'Ventas por día')
+    );
+
+    // Gráfico 2: Resumen ingresos/egresos
+    new Chart(
+      document.getElementById('graficoResumen'),
+      makeBarConfig(['Ingresos','Egresos'], [totalIngresos, totalEgresos], 'Resumen')
+    );
+
+    // Gráfico 3: Top productos (pie) + leyenda enriquecida
+    new Chart(
+      document.getElementById('graficoTop'),
+      makePieConfig(topLabels, topValues)
+    );
+
+    // Leyenda al lado con nombre completo + cantidad + %
+    (function(){
+      const el = document.getElementById('leyendaTop');
+      if (!el) return;
+      const total = topValues.reduce((a,b)=>a+(+b||0), 0);
+      el.innerHTML = topLabels.map((lbl, i) => {
+        const val = +topValues[i] || 0;
+        const pct = total ? ((val*100/total).toFixed(1) + '%') : '0%';
+        const idx = (i+1).toString().padStart(2,'0');
+        return `
+          <div class="flex items-center justify-between gap-3 bg-black/30 rounded-md px-3 py-2 ring-1 ring-white/10">
+            <div class="truncate" title="${lbl}">
+              <span class="inline-block w-6 text-slate-400">${idx}.</span>
+              <span class="text-slate-100">${lbl}</span>
+            </div>
+            <div class="shrink-0 text-slate-200 font-semibold tabular-nums">${val}</div>
+            <div class="shrink-0 text-slate-400 text-xs tabular-nums">${pct}</div>
+          </div>
+        `;
+      }).join('');
+    })();
+  </script>
+{% endblock %}

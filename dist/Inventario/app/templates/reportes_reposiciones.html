@@ -1,0 +1,176 @@
+{% extends "base_tw.html" %}
+{% block title %}Reportes · Reposiciones{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- FULL-BLEED para ocupar 100% del ancho -->
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 mx-auto gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 max-w-7xl px-2">
+
+      <!-- CONTENT (100% ancho sin sidebar) -->
+      <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+            📈 Reposiciones / Aumentos de Stock
+          </h1>
+          <a
+            href="{{ url_for('main.export_reposiciones_filtrado', r=r, desde=desde, hasta=hasta, producto_id=producto_id, origen=origen) }}"
+            class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold inline-flex items-center gap-2 ring-1 ring-white/10">
+            ⬇️ <span>Exportar CSV (filtrado)</span>
+          </a>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white/10 rounded-lg ring-1 ring-white/10 p-4 mb-6">
+          <form method="GET" action="{{ url_for('main.reportes_reposiciones') }}"
+                class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+
+            <!-- Rango -->
+            <div class="md:col-span-3">
+              <label class="block text-sm font-semibold mb-1 text-slate-200">Rango</label>
+              <select name="r" id="rango"
+                      class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="hoy"           {% if r=='hoy' %}selected{% endif %}>Hoy</option>
+                <option value="semana"        {% if r=='semana' %}selected{% endif %}>Últimos 7 días</option>
+                <option value="mes"           {% if r=='mes' %}selected{% endif %}>Mes actual</option>
+                <option value="personalizado" {% if r=='personalizado' %}selected{% endif %}>Personalizado</option>
+              </select>
+            </div>
+
+            <!-- Fechas -->
+            <div id="fechas" class="md:col-span-4 {% if r!='personalizado' %}hidden{% endif %}">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-semibold mb-1 text-slate-200">Desde</label>
+                  <input type="date" name="desde" value="{{ desde }}"
+                         class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1 text-slate-200">Hasta</label>
+                  <input type="date" name="hasta" value="{{ hasta }}"
+                         class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Producto -->
+            <div class="md:col-span-3">
+              <label class="block text-sm font-semibold mb-1 text-slate-200">Producto</label>
+              <select name="producto_id"
+                      class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Todos</option>
+                {% for pid, nombre in productos %}
+                  <option value="{{ pid }}" {% if producto_id and producto_id|string == pid|string %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Origen -->
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold mb-1 text-slate-200">Origen</label>
+              <select name="origen"
+                      class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="" {% if origen=='' %}selected{% endif %}>Todos</option>
+                <option value="compra" {% if origen=='compra' %}selected{% endif %}>Compras</option>
+                <option value="manual" {% if origen=='manual' %}selected{% endif %}>Reposición manual</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-12">
+              <div class="flex flex-wrap items-center gap-3">
+                <button class="px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg font-semibold">
+                  Aplicar
+                </button>
+                <span class="text-sm text-slate-400">{{ rango_label }}: {{ desde }} → {{ hasta }}</span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Totales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-black/60 to-white/5 rounded-lg p-4 ring-1 ring-white/10">
+            <div class="text-sm text-slate-400">Total unidades ingresadas</div>
+            <div class="text-2xl font-bold text-white">{{ total_unidades }}</div>
+          </div>
+          <div class="bg-black/60 to-white/5 rounded-lg p-4 ring-1 ring-white/10">
+            <div class="text-sm text-slate-400">Valor total (si hay costo)</div>
+            <div class="text-2xl font-bold text-white">{{ total_valor }}</div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="overflow-x-auto rounded-lg ring-1 ring-white/10 bg-white/5">
+          <table class="w-full text-sm bg-transparent">
+            <thead>
+              <tr class="bg-black/60 text-left text-slate-200">
+                <th class="p-3 font-semibold">Fecha</th>
+                <th class="p-3 font-semibold">Producto</th>
+                <th class="p-3 font-semibold">Código</th>
+                <th class="p-3 font-semibold">Categoría</th>
+                <th class="p-3 font-semibold">Cantidad</th>
+                <th class="p-3 font-semibold">Costo unit.</th>
+                <th class="p-3 font-semibold">Valor</th>
+                <th class="p-3 font-semibold">Origen</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {% for f, nombre, codigo, cat, cant, costo, ref in rows %}
+                {% set valor = (costo or 0) * cant %}
+                <tr class="hover:bg-white/5 transition-colors border-t border-white/5">
+                  <td class="p-3 text-slate-300">{{ f }}</td>
+                  <td class="p-3 text-slate-200">{{ nombre }}</td>
+                  <td class="p-3 text-slate-300">{{ codigo or '' }}</td>
+                  <td class="p-3 text-slate-300">{{ cat or '' }}</td>
+                  <td class="p-3 font-semibold text-emerald-400">+{{ cant }}</td>
+                  <td class="p-3 text-slate-300">{{ (costo if costo is not none else '') }}</td>
+                  <td class="p-3 text-slate-200">{{ valor|round(2) }}</td>
+                  <td class="p-3">
+                    {% if ref and ref.startswith('compra:') %}
+                      <span class="px-2 py-0.5 rounded-full text-xs bg-blue-600 text-white">Compra</span>
+                    {% else %}
+                      <span class="px-2 py-0.5 rounded-full text-xs bg-emerald-600 text-white">Reposición</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+              {% if rows|length == 0 %}
+                <tr><td class="p-4 text-center text-slate-400" colspan="8">Sin resultados para este filtro</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Mostrar/ocultar fechas si "personalizado"
+  (function(){
+    const rangoSel = document.getElementById('rango');
+    const fechasDiv = document.getElementById('fechas');
+    function toggleFechas(){
+      (rangoSel.value === 'personalizado')
+        ? fechasDiv.classList.remove('hidden')
+        : fechasDiv.classList.add('hidden');
+    }
+    rangoSel.addEventListener('change', toggleFechas);
+    toggleFechas();
+  })();
+</script>
+{% endblock %}

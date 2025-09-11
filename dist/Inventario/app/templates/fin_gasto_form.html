@@ -1,0 +1,76 @@
+{% extends "base_tw.html" %}
+{% block title %}Finanzas · Registrar Gasto{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  :root { font-family: 'Inter', sans-serif; }
+  @supports (font-variation-settings: normal) { :root { font-family: 'Inter var', sans-serif; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+  <div class="antialiased bg-black text-slate-300 min-h-[calc(100vh-7rem)] py-6">
+    <div class="grid grid-cols-12 w-full gap-2 sm:gap-4 md:gap-6 lg:gap-10 xl:gap-14 px-2">
+      <main id="content" class="bg-white/10 col-span-12 rounded-lg p-6 ring-1 ring-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-br from-white via-white/60 to-transparent bg-clip-text text-transparent">
+            🧾 Registrar un Gasto
+          </h1>
+          <a href="{{ url_for('main.fin_gastos') }}"
+             class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold ring-1 ring-white/10">
+            📄 Ver gastos
+          </a>
+        </div>
+
+        <form action="{{ url_for('main.registrar_gasto') }}" method="POST"
+              class="grid md:grid-cols-3 gap-4 rounded-xl p-4 bg-white/5 ring-1 ring-white/10">
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Motivo</label>
+            <input type="text" name="motivo" required
+                   class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 px-3 py-2
+                          placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   placeholder="Ej. Compra mayorista de mercadería">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-1 text-slate-200">Monto</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">Bs</span>
+              <input type="number" step="0.01" name="monto" required min="0"
+                     class="w-full rounded-lg bg-black/30 text-slate-200 border border-white/10 pl-10 pr-3 py-2
+                            focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                     placeholder="0.00">
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Usa punto para decimales (ej. 1250.50).</p>
+          </div>
+
+          <!-- NUEVO: forzar vínculo con reposiciones -->
+          <div class="md:col-span-3">
+            <label class="inline-flex items-center gap-2">
+              <input type="checkbox" name="redir_repo" value="1">
+              <span>Vincular con reposiciones (compra mayorista)</span>
+            </label>
+            <p class="text-xs text-slate-400 mt-1">
+              Si está marcado (o si el motivo contiene “compra” o “mayorista”), al guardar te llevará a repartir este monto entre productos.
+            </p>
+          </div>
+
+          <div class="md:col-span-3 flex items-center gap-3 pt-2">
+            <button class="px-4 py-2 bg-fuchsia-600/90 hover:bg-fuchsia-500 text-white rounded-lg font-semibold">
+              Registrar Gasto
+            </button>
+            <a href="{{ url_for('main.fin_panel') }}"
+               class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-100 font-semibold ring-1 ring-white/10">
+              Cancelar
+            </a>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+</div>
+{% endblock %}

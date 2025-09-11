@@ -1,0 +1,136 @@
+{% extends "base_tw.html" %}
+{% block title %}Nuevo SKU{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">➕ Nuevo SKU</h1>
+
+<form method="POST" class="space-y-6">
+  <div class="bg-white p-4 rounded-xl shadow grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="md:col-span-2">
+      <label class="font-semibold">Producto (SPU)</label>
+      <input name="product_name" class="w-full border rounded-lg p-2" placeholder="Ej: Shampoo Sachet" required>
+    </div>
+    <div>
+      <label class="font-semibold">Categoría</label>
+      <input name="category" list="catlist" class="w-full border rounded-lg p-2" placeholder="Opcional">
+      <datalist id="catlist">
+        {% for c in cats %}<option value="{{ c['name'] }}">{% endfor %}
+      </datalist>
+    </div>
+    <div>
+      <label class="font-semibold">Marca</label>
+      <input name="brand" list="brandlist" class="w-full border rounded-lg p-2" placeholder="Ej: Dove">
+      <datalist id="brandlist">
+        {% for b in brands %}<option value="{{ b['name'] }}">{% endfor %}
+      </datalist>
+    </div>
+    <div>
+      <label class="font-semibold">Código de barras</label>
+      <input name="barcode" class="w-full border rounded-lg p-2" placeholder="Opcional">
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-xl shadow">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold">Atributos</h2>
+      <a href="{{ url_for('detail.atributos') }}" class="text-sm underline">Gestionar atributos</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left">
+          <th>code</th><th>type</th><th>valor</th><th>UOM</th><th></th>
+        </tr></thead>
+        <tbody id="attrBody">
+          <tr>
+            <td>
+              <input name="attr_code[]" list="attrlist" class="border rounded-lg p-1" placeholder="p.ej. size_value">
+              <datalist id="attrlist">
+                {% for a in attrs %}<option value="{{ a['code'] }}">{% endfor %}
+              </datalist>
+            </td>
+            <td>
+              <select name="attr_type[]" class="border rounded-lg p-1">
+                <option>text</option><option>number</option><option>enum</option><option>boolean</option><option>date</option>
+              </select>
+            </td>
+            <td><input name="attr_value[]" class="border rounded-lg p-1"></td>
+            <td>
+              <select name="attr_unit[]" class="border rounded-lg p-1">
+                <option value="">—</option>
+                {% for u in uoms %}<option value="{{ u['code'] }}">{{ u['code'] }}</option>{% endfor %}
+              </select>
+            </td>
+            <td><button type="button" class="px-2 py-1 border rounded addAttr">+</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-xl shadow grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      <label class="font-semibold">Tags (coma-separado)</label>
+      <input name="tags" class="w-full border rounded-lg p-2" placeholder="descartable, fiesta, eco">
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-xl shadow">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold">Empaques</h2>
+      <button type="button" id="addPkg" class="px-3 py-1 rounded-lg bg-gray-800 text-white">Agregar empaque</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left">
+          <th>Nivel</th><th>Etiqueta</th><th>Unidades por empaque</th>
+          <th>Vendible</th><th>Comprable</th><th>Mín. múltiplo</th><th>Excepción</th>
+        </tr></thead>
+        <tbody id="pkgBody">
+          <tr>
+            <td>
+              <select name="pkg_level[]" class="border rounded-lg p-1">
+                <option>UNIT</option><option>PACK</option><option>CASE</option><option>BUNDLE</option>
+              </select>
+            </td>
+            <td><input name="pkg_label[]" class="border rounded-lg p-1" placeholder="Unidad / Pack x4 / Caja x24 / Zacaña"></td>
+            <td><input name="pkg_units[]" class="border rounded-lg p-1" placeholder="1 / 4 / 24"></td>
+            <td class="text-center"><input type="checkbox" name="pkg_sellable[]" value="1" checked></td>
+            <td class="text-center"><input type="checkbox" name="pkg_purchasable[]" value="1" checked></td>
+            <td><input name="pkg_min_mult[]" class="border rounded-lg p-1" value="1"></td>
+            <td>
+              <select name="pkg_exception[]" class="border rounded-lg p-1">
+                <option value="">—</option>
+                <option value="zacanas">zacanas</option>
+                <option value="combo">combo</option>
+                <option value="mixto">mixto</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="flex justify-end">
+    <button class="px-4 py-2 rounded-lg bg-green-600 text-white">Guardar SKU</button>
+  </div>
+</form>
+
+<script>
+document.querySelector('#attrBody').addEventListener('click', e=>{
+  if(e.target.classList.contains('addAttr')){
+    const tr = e.target.closest('tr').cloneNode(true);
+    tr.querySelectorAll('input').forEach(i=>i.value='');
+    tr.querySelectorAll('select').forEach(s=>s.value=s.options[0].value);
+    e.target.closest('tbody').appendChild(tr);
+  }
+});
+document.getElementById('addPkg').onclick = ()=>{
+  const tr = document.querySelector('#pkgBody tr').cloneNode(true);
+  tr.querySelectorAll('input').forEach(i=>{
+    if(i.type==='checkbox'){ i.checked=true; } else { i.value=''; }
+  });
+  tr.querySelectorAll('select').forEach(s=>s.value=s.options[0].value);
+  document.getElementById('pkgBody').appendChild(tr);
+};
+</script>
+{% endblock %}
